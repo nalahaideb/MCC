@@ -8,6 +8,9 @@ mcc: $(SRCS) $(HDRS)
 
 .PHONY: clean
 
+r run:
+	./mcc
+
 clean:
 	rm -f mcc
 	rm *~

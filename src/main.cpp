@@ -3,10 +3,7 @@
 
 int main()
 {
-	std::string test = "agaga;/**/bbb; /*tetetete*/ hello world;";
-	Lexer lexer(test);
-	int lines = 0;
-	lexer.block_comment_lexer(test, lines);
-	std::cout << lines << std::endl;
+	//std::string input = "agaga;/**/bbb; /*tetetete*/ hello world;";
+    
 	return 0;
 }

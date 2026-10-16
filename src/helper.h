@@ -1,7 +1,10 @@
-#include "constants.h"
+#ifndef HELPER_H
+#define HELPER_H
 
-//
-inline std::string match_var(std::string & input)
-{
-	while ()
-}
+inline bool ISNUM(const char c)
+{return (c >= 48 && c <= 57);}
+
+inline bool ISALPHA(const int c)
+{return ((c >= 65 && c <= 90) || (c >= 97 && c <= 122));}
+
+#endif
