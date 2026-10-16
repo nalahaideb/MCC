@@ -1,5 +1,12 @@
 #include "constants.h"
 #include <vector>
+/*
+  TODO:
+  [] make it lex with no spaces
+  [] strip comments
+  [] lex tokens into vectors based on line
+  [] block comments keep track of line count
+*/
 
 /*
   should return a vector of vectors with tokens, each subvector denoting a line of formatted input 
@@ -11,61 +18,67 @@ class Lexer
  Lexer(const std::string & input)
 	 :tape(input)
 	{}
-	//std::vector< std::vector > type(const std::vector< std::string > & input);   //determine type 
+	//std::vector< std::vector > type(const std::vector< std::string > & input); //determine type 
 	std::vector< std::string > strip_line(const std::string & input);
-	std::vector< token > type_lexer(const std::string & input);
-	std::string block_comment_lexer(std::string & input);
+	std::vector< token > type_lexer(std::string & input);
+    void block_comment_lexer(std::string & input, int & line_ct);
+	std::string lex_var(std::string & input);
+	std::string lex_num(std::string & input);
  private:
 	//ptr to type_map in constants.h
-    constexpr static const auto * tokens = &type_map;	
+    constexpr static const auto * tok_type = &type_map;
+    constexpr static const auto * tok_op = &operators;
+    /* constexpr static const auto * tok_num = &type_map;	 */
+    /* constexpr static const auto * tok_char = &type_map;	 */
 	std::string tape;
 };
 
-//called when a beginning block-comment is detected (/*). scans until it reaches a (*/), returning nonempty string with error msg
-//"input" should be a substring
-std::string Lexer::block_comment_lexer(std::string & input)
+//preprocessing, removes all block comments, throws error otherwise
+void Lexer::block_comment_lexer(std::string & input, int & line_ct)
 {
-	if (input.empty()) return "error line insert_line_here: no end comment";
-	size_t k = input.rfind("*/");
-    size_t bcom_nest = input.find("/*", 1);
-	size_t ecom_nest = input.find("/*");
-	
-	//k == ecom_nest means no other nested end-block-comment was found,
-	//bcom starts +1 of input so no nested begin-block-comment was found
-	//returns input - block comment if success, error string if not
-	if (k == ecom_nest && bcom_nest == std::string::npos)
-		return input.substr(ecom_nest, input.size() - ecom_nest);
-	else
-	{
-		if (bcom_nest != 0) return "error line insert_line_here: nested block comment begin";
-		else                return "error line insert_line_here: nested block comment end";
-	}
-}
+	//bool nest_flag = false;
+	size_t k = input.find("/*");
+	//no block comment, block comment ends will throw errors during lexing
+	if (k == std::string::npos) return;
 
-std::vector< token > type_lexer(const std::string & input)
-{
-	
-}
-
-//increment line ct by 
-std::vector< std::string > Lexer::strip_line(const std::string & input)
-{
-	size_t line_ct = 0;
-	std::vector< std::string > ret;
-	std::string word;
-	char k = input[0];
-	while (input[k] != '\0')
+	//acts as a stack, has at most two elements before throwing error
+	std::vector< size_t > comment_stk = {k};
+	while (input[k] != '\0' && k != std::string::npos)
 	{
-		if (input[k] == ' ') 
+		if (k < input.size() - 1 && input[k] == '*' && input[k+1] == '/')
 		{
-			ret.push_back(word);
-			word = "";
+			std::cout << input.size() - k << ", " << k << std::endl;
+			input = input.substr(k, input.size() - k);
+			comment_stk = {};
+		    k = input.find("/*");
 		}
-		else if (input[k] == '\n') //increment line counter
-			++line_ct;
+		else if (comment_stk.size() != 1 && k < input.size() - 1 && input[k] == '/' && input[k+1] == '*')
+		{//above case already handles beginning comments, should throw error
+			std::cout << "INVALID SYNTAX, NESTING BLOCK COMMENT\n";
+			throw -1;
+		}
+		else if (k == '\n')
+		{
+			++line_ct, ++k;
+		}
 		else
-			word += input[k];
-		++k;
+			++k;
 	}
-	return ret;
+	std::cout << "input = " << input << std::endl;
 }
+
+
+/* std::vector< std::string > Lexer::strip_line(const std::string & input) */
+/* { */
+/* 	size_t line_ct = 0; */
+/* 	std::vector< std::string > ret; */
+/* 	std::string word; */
+/* 	char k = input[0]; */
+/* 	while (input[k] != '\0') */
+/* 	{ */
+/* 		if (input[k] == ' ') ++k; //skip spaces */
+/* 		else if (input[k]) //character match */
+		    
+/* 	} */
+/* 	return ret; */
+/* } */

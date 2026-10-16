@@ -1,0 +1,7 @@
+#include "constants.h"
+
+//
+inline std::string match_var(std::string & input)
+{
+	while ()
+}
