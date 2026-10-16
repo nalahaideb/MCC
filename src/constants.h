@@ -11,6 +11,10 @@ enum
 
 typedef std::pair<std::string, int> token;
 
+// const static std::unordered_set<char> alphabet = {};
+
+// const static std::unordered_set<char> operators = {};
+
 //type map
 const static std::unordered_map<std::string, int> type_map =
 	{
