@@ -3,7 +3,7 @@
 
 int main()
 {
-	std::string test = "/**/";
+	std::string test = "agaga;/**/bbb; /*tetetete*/ hello world;";
 	Lexer lexer(test);
 	int lines = 0;
 	lexer.block_comment_lexer(test, lines);

@@ -36,35 +36,41 @@ class Lexer
 //preprocessing, removes all block comments, throws error otherwise
 void Lexer::block_comment_lexer(std::string & input, int & line_ct)
 {
-	//bool nest_flag = false;
-	size_t k = input.find("/*");
-	//no block comment, block comment ends will throw errors during lexing
-	if (k == std::string::npos) return;
-
-	//acts as a stack, has at most two elements before throwing error
-	std::vector< size_t > comment_stk = {k};
-	while (input[k] != '\0' && k != std::string::npos)
+	if (input.empty()) return;
+	
+	std::vector< std::pair< int, int > > comment_blocks;
+	size_t k = 0;
+	//find beginning / end delimiters for block comments
+	while (input[k] != '\0')
 	{
-		if (k < input.size() - 1 && input[k] == '*' && input[k+1] == '/')
+		if (k < input.size() - 1 && input[k] == '/' && input[k+1] == '*')
+			comment_blocks.push_back({BCOM, k});
+		else if (k < input.size() - 1 && input[k] == '*' && input[k+1] == '/')
+			comment_blocks.push_back({ECOM, k});//have to return substring of ECOM + 1
+		else if (input[k] == '\n')
+			++line_ct;
+	}
+	//should be 2n comment delimiters per n comment section blocks
+	if (comment_blocks.size() % 2) throw -1;
+	std::string replacement;
+	int k = 0;
+	for (int c = 1; c < comment_blocks.size(); c += 2)
+	{
+		const auto & begin = comment_blocks[c - 1];
+		const auto & end = comment_blocks[c];
+		
+		//check for sequential comment block pairs
+		if (begin.first != BCOM || end.first != ECOM)
 		{
-			std::cout << input.size() - k << ", " << k << std::endl;
-			input = input.substr(k, input.size() - k);
-			comment_stk = {};
-		    k = input.find("/*");
-		}
-		else if (comment_stk.size() != 1 && k < input.size() - 1 && input[k] == '/' && input[k+1] == '*')
-		{//above case already handles beginning comments, should throw error
-			std::cout << "INVALID SYNTAX, NESTING BLOCK COMMENT\n";
 			throw -1;
 		}
-		else if (k == '\n')
+		else //ignore chars found between the positions of the above comment blocks
 		{
-			++line_ct, ++k;
+			replacement += input.substr(input, begin.second) + ' ';
 		}
-		else
-			++k;
 	}
-	std::cout << "input = " << input << std::endl;
+	//string without (correctly formatted) block comments 
+	input = replacement;
 }
 
 
