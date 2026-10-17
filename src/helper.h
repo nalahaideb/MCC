@@ -7,4 +7,6 @@ inline bool ISNUM(const char c)
 inline bool ISALPHA(const int c)
 {return ((c >= 65 && c <= 90) || (c >= 97 && c <= 122));}
 
+inline bool ISUNARY(const int c)
+{return c == '!' || c == '-' || c == '+';}
 #endif

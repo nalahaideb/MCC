@@ -5,6 +5,8 @@
 #include <string>
 #include "helper.h"
 
+#define MAX_INT 2147483647
+
 class Error
 {
 	public:
@@ -13,6 +15,7 @@ class Error
 	
 	const std::string message;
 };
+
 //types (and block comments)
 enum 
 	{
@@ -21,11 +24,18 @@ enum
 
 // typedef std::pair< std::string, int > token;
 
-// const static std::unordered_set<std::string> alphabet = {};
-// const static std::unordered_set<std::string> numbers = {};
+const static std::unordered_set< char > alphabet = {};
+const static std::unordered_set< char > numbers = {};
+const static std::unordered_set< char > opr_begin = {'<', '>', '!', '=', '+', '-', '/', '%', '.', '[', ']', '{', '}', '(', ')', '|', '&',};
 const static std::unordered_map< std::string, std::string > operators =
 	{
-		{"<", "LT"}, {">", "GT"}, {"==","EQ"},{"<=","LE"},{">=","GE"},{"!","NOT"},{"||","OR"},{"&&","AND"},{"(","LPAREN"},{")","RPAREN"},{"+","PLUS"},{"-","MINUS"},{"/","DIV"},{"%","MOD"},{".","DECIMAL"}, {"=","ASSIGN"},{";","SEMI"}, {"{","LBRACE"}, {"}","RBRACE"}
+		{"<", "LT"}, {">", "GT"}, {"==","EQ"},{"<=","LE"}, {"!=", "NEQ"},
+		{">=","GE"}, {"!","NOT"}, {"||","OR"}, {"&&","AND"}, {"(","LPAREN"},
+		{")","RPAREN"}, {"{","LBRACE"}, {"}","RBRACE"}, {"[", "LBRACK"},
+		{"", "RBRACK"}, {"+","PLUS"}, {"-","MINUS"}, {"/","DIV"}, {"*", "MULT"},
+		{"%","MOD"}, {".","DECIMAL"}, {"=","ASSIGN"}, //move maybe? {";","SEMI"},
+		{"++", "SINC"}, {"--", "SDEC"}, {"+=", "CADD"}, {"-=", "CMIN"},
+		{"/=", "CDIV"}, {"%=", "CMOD"}, {"*=", "CMULT"}
 	};
 
 //type map

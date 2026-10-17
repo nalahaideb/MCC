@@ -1,21 +1,39 @@
+#ifndef LEXER_H
+#define LEXER_H
 #include "constants.h"
 #include <vector>
+//==============================================================================
 /*
   TODO:
   [] lex vars
   [] lex int/floats
-  [] lex sci not floats (1E42, 42e10, -1.24e5, etc)
+  [] lex sci notat floats (1E42, 42e10, -1.24e5, etc)
   [] lex booleans
   [] add support for extended assignment ops (-=, *=, ++, etc)
   [] lex with / without spaces
   [] strip comments
   [] lex tokens into vectors based on line
   [] block comments keep track of line count
+  [] organize symbol checks into sets (?)
 */
+//==============================================================================
 
+//==============================================================================
 /*
-  should return a vector of vectors with tokens, each subvector denoting a line of formatted input 
+  OVERVIEW:
+
+  - each function does its own designated task, "consuming" chars that match it
+  - they return the modified input to "run()"
+  - "run()" handles the type deduction based off character
+  - "run()" will call the correct function to consume characters from the input
+  - "run()" collects output tokens as strings in a vector for file printing
+  - "lex_var()" consumes valid IDENT symbols
+  - "lex_num()" consumes valid NUM symbols (float, int, double, etc)
+  - "lex_type()" consumes valid TYPE symbols (int, bool, while, etc)
+  - "lex_op()" consumes valid OPR symbols (==, !, *, ++, etc)
+  
 */
+//==============================================================================
 class Lexer
 {
 
@@ -25,9 +43,10 @@ class Lexer
 	{}
 	inline void run();
     //inline void block_comment_lexer(std::string & input, int & line_ct);
-	inline int type(const std::string & input);
-	inline std::string lex_var(const std::string & input);
-	inline std::string lex_num(const std::string & input);
+	inline int lex_type(std::string & input);
+	inline std::string lex_var(std::string & input);
+	inline std::pair< std::string, std::string > lex_opr(std::string input);
+	inline std::pair< int, std::string > lex_num(std::string & input);
  private:
 	//ptr to type_map in constants.h
     constexpr static const auto * tok_type = &type_map;
@@ -40,22 +59,57 @@ class Lexer
 
 //extend to float, check todo
 //check assmt for overflow
-std::pair< int, std::string > Lexer::lex_num(const std::string & input)
+std::pair< int, std::string > Lexer::lex_num(std::string & input)
 {
 	int k = 0;
+	std::string ret;
 	while (ISNUM(input[k]))
 	{
+		ret += input[k];
 		++k;
+		//add loop here to extract ints after sci notat / decimal
 	}
+	//throw error on digit count > MAX_INT digit count
+	if (ret.size() > 11)
+	{
+		Error e("NUM LARGER THAN MAX");
+		throw e;
+	}
+	else // convert to num
+	{
+		int pow = 1;
+		k = 0;
 		
+		//set to reg int for same signedness, the warning was getting annoying
+		int size = ret.size() - 1;
+		for (int v = 0; v < size; ++v)
+			pow *= 10;
+		for (const auto & d : ret)
+		{
+		    k += pow * (d-48);
+			pow /= 10;
+		}
+	}
+	//attempt to build num, throw error if larger than MAX_INT
+	if (k > MAX_INT)
+	{
+		Error e("NUM LARGER THAN MAX");
+		throw e;
+	}
+	else //consume (size of int str symbols), return pair
+	{
+		std::pair< int, std::string > number = {k, ret};
+		input = input.substr(ret.size(), (input.size() - ret.size()));
+		return number;
+	}
 }
 
-std::string Lexer::lex_var(const std::string & input)
+std::string Lexer::lex_var(std::string & input)
 {
 	int k = 0;
 	std::string ret;
 	
-	//break on non-char / underscore initial value
+	//throw on non-char / underscore initial value
 	if (!ISALPHA(input[k]) && input[k] != '_')
 	{
 		Error e("INVALID IDENT CHAR" + input[k]);
@@ -65,17 +119,40 @@ std::string Lexer::lex_var(const std::string & input)
 	while (input[k] != '\0')
 	{
 		const int c = input[k];
-		if (c == ' ' || c == ';') break;
-		else if (ISALPHA(c) || ISNUM(c) || ISNUM(c) || c == '_')
+	    if (ISALPHA(c) || ISNUM(c) || ISNUM(c) || c == '_')
+		{
 			ret += c;
+		}
 		else 
 		{
-			Error e("INVALID IDENT CHAR" + char(input[k]));
-			throw e;
+			break;
 		}
 		++k;
 	}
 	return ret;
+}
+
+std::pair< std::string, std::string > Lexer::lex_opr(std::string input)
+{
+	std::string ret;
+	int k = 0;
+	while (input[k] != '\0')
+	{
+		ret += input[k];
+		++k;
+	}
+
+	const auto opr = tok_op->find(ret);
+	//throw error on malformed operator
+	if (opr == tok_op->end())
+	{
+		Error e("INVALID OPERATOR:" + ret);
+		throw e;
+	}
+	else
+	{
+		return {opr->first, opr->second};
+	}
 }
 
 //preprocessing, removes all block comments, throws error otherwise
@@ -117,3 +194,5 @@ std::string Lexer::lex_var(const std::string & input)
 /* 	//string without (correctly formatted) block comments  */
 /* 	input = replacement; */
 /* } */
+
+#endif
