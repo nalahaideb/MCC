@@ -14,8 +14,8 @@ int main()
 	test_operator(lexer);
 	std::cout << "============================TEST SINGLE COMMENT============================" << std::endl;
 	test_single_comment(lexer);
-	// std::cout << "============================TEST BLOCK COMMENT============================" << std::endl;
-	// test_block_comment(lexer);
+	std::cout << "============================TEST BLOCK COMMENT============================" << std::endl;
+	test_block_comment(lexer);
 	
 	return 0;
 }

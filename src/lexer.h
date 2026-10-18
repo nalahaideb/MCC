@@ -11,11 +11,12 @@
   [] lex booleans
   [x] add support for extended assignment ops (-=, *=, ++, etc)
   [] lex with / without spaces
-  [] strip comments
+  [x] strip comments
   [] lex tokens into vectors based on line
-  [] block comments keep track of line count
+  [x] block comments keep track of line count
   [] organize symbol checks into sets (?)
   [] make choosing lex function for "run()" more efficient (with bits?)
+  [] fix single-comment lexer throwing an erro when 'EOF' reached before '\n'
 */
 //==============================================================================
 
@@ -195,7 +196,7 @@ std::string Lexer::lex_opr(std::string input)
 void Lexer::block_comment_lexer(std::string & input, int & line_ct)
 {
 	if (input.empty()) return;
-	bool nested = false;
+	bool nested = false, comment_terminated = false;
 	int k = 0, input_size = input.size();
 	while (input[k] != '\0')
 	{
@@ -204,18 +205,24 @@ void Lexer::block_comment_lexer(std::string & input, int & line_ct)
 			Error e("[block_comment_lexer]: ILLEGAL NESTED COMMENT");
 			throw e;
 		}
-		else if (k < input_size - 1 && input.substr(k, 2) == "/*")
+		else if (k < input_size - 1 && input.substr(k, k + 1) == "/*")
 			nested = true;
 		else if (input[k] == '\n' || input[k] == '\r')
 			++line_ct;
-		else if (k < input_size - 1 && input.substr(k, 2) == "*/")
+		else if (k < input_size - 1 && input.substr(k, 1 + k) == "*/")
 		{
 			//skip end of block comment
-			k++;
+			k += 2;
 			input = input.substr(k, input_size - k);
+			comment_terminated = true;
 			break;
 		}
 		++k;
+	}
+	if (!comment_terminated)
+	{
+		Error e("[block_comment_lexer]: COMMENT UNTERMINATED");
+		throw e;
 	}
 }
 

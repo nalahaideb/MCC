@@ -98,9 +98,10 @@ void test_single_comment(Lexer & lexer)
 	}
 }
 
+//some of these "pass" but are really supposed to fail in a later iteration 
 void test_block_comment(Lexer & lexer)
 {
-	std::vector< std::string > input = {""};
+	std::vector< std::string > input = {"/**/", "/*!@#!$#!%!#%!#^*/", "/*             */", "*/ /*", "/* */ */", "/*////////*/", "/*" };
     for (auto & s : input)
 	{
 		std::cout << "testing: " << s << "... ";
