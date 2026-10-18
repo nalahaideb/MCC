@@ -47,7 +47,7 @@ public:
 	inline std::string lex_var(std::string & input);
 	inline std::string lex_opr(std::string input);
 	inline std::string lex_num(std::string & input);
-	inline std::vector< std::vector< std::string > > lex(std::string & input);
+	inline std::vector< std::vector< std::string > > lex();
 	
 private:
     inline int TYPE(const int c);
@@ -62,47 +62,62 @@ private:
 	std::string tape;
 };
 
-std::vector< std::vector< std::string > > Lexer::lex(std::string & input)
+std::vector< std::vector< std::string > > Lexer::lex()
 {
 	int k = 0, line_ct = 0, type = -1;
 	std::string tok;
-	int input_size = input.size();
-	while (input[k] != '\0')
+	int tape_size = tape.size();
+	while (tape[k] != '\0')
 	{
-		type = TYPE(input[k]);
-		switch (type)
+		try
 		{
-		case 0: //int
-			tok = lex_num(input);
-			break;
-		case 1: //character
-			tok = lex_var(input);
-			break;
-		case 2: //operator
+			type = TYPE(tape[k]);
+			switch (type)
 			{
-			const char c = input[k + 1];
-			//on case for comments ("//", "/*")
-			if (k < input_size - 1 && (c == '/' || c == '*'))
-			{
-				//single comments
-				if (c == '/') single_comment_lexer(input, line_ct);
-				//block comments
-				else block_comment_lexer(input, line_ct); 
+			case 0: //int
+				tok = lex_num(tape);
+				break;
+			case 1: //character
+				tok = lex_var(tape);
+				break;
+			case 2: //operator
+				{
+					const char c = tape[k + 1];
+					//on case for comments ("//", "/*")
+					if (k < tape_size - 1 && (c == '/' || c == '*'))
+					{
+						//single comments
+						if (c == '/') single_comment_lexer(tape, line_ct);
+						//block comments
+						else block_comment_lexer(tape, line_ct); 
+					}
+					//regular operator
+					else tok = lex_opr(tape);
+					break;
+				}
+			case 3: //line increment
+				line_ct++;
+				break;
+			default:
+				std::string f = {tape[k]};
+				Error e("[lex]: INVALID SYMBOL: '" + f + "'");
 			}
-			//regular operator
-			else tok = lex_opr(input);
-			break;
-			}
-		case 3: //line increment
-			line_ct++;
-			break;
-		default:
-			std::string f = {input[k]};
-			Error e("[lex]: INVALID SYMBOL: '" + f + "'");
 		}
-		
+		catch (Error & e) //break on any error
+		{
+			std::cout << "ERROR: " << e.message << std::endl;
+			return tokens;
+		}
+		std::cout << line_ct << " token = " << tok << std::endl;
 		//add output to current line vector
+		tok = INT_STR(line_ct) + " " + tok;
+		if (line_ct >= tokens.size())
+		{
+			std::vector< std::string > temp;
+			tokens.push_back(temp);
+		}
 		tokens[line_ct].push_back(tok);
+	    
 		++k;
 	}
 	return tokens;

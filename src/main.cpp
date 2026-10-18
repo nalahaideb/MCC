@@ -4,18 +4,17 @@
 int main()
 {
 
-	
-	Lexer lexer("");
-	std::cout << "============================TEST NUMS============================" << std::endl;
-	test_numbers(lexer);
-	std::cout << "============================TEST VARS============================" << std::endl;
-	test_ident(lexer);
-	std::cout << "============================TEST OPRS============================" << std::endl;
-	test_operator(lexer);
-	std::cout << "============================TEST SINGLE COMMENT============================" << std::endl;
-	test_single_comment(lexer);
-	std::cout << "============================TEST BLOCK COMMENT============================" << std::endl;
-	test_block_comment(lexer);
-	
+	std::string input = "x = 42\n";
+	Lexer lexer(input);
+	const auto output = lexer.lex();
+
+	// for (const auto & k : output)
+	// {
+	// 	for (const auto & v : k)
+	// 	{
+	// 		std::cout << v << ", ";
+	// 	}
+	// 	std::cout << std::endl;
+	// }
 	return 0;
 }

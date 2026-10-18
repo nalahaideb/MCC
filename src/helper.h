@@ -20,4 +20,15 @@ inline int STR_INT(const std::string & s)
 	}
 	return k;
 }
+
+inline std::string INT_STR(int k)
+{
+	std::string ret;
+	while (k > 0)
+	{
+		ret += char(k % 10);
+		k /= 10;
+	}
+	return ret;
+}
 #endif

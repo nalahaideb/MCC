@@ -200,7 +200,7 @@ void test_block_comment(Lexer & lexer)
 	/* } */
 /* } */
 
-/* void test_bool(Lexer & lexer) */
+/* void test_template(Lexer & lexer) */
 /* { */
 /* std::vector< std::string > input = {""}; */
 /* for (auto & s : input) */
@@ -214,4 +214,18 @@ void test_block_comment(Lexer & lexer)
 /* } */
 /* } */
 
+void test_all()
+{
+	Lexer lexer("");
+	std::cout << "============================TEST NUMS============================" << std::endl;
+	test_numbers(lexer);
+	std::cout << "============================TEST VARS============================" << std::endl;
+	test_ident(lexer);
+	std::cout << "============================TEST OPRS============================" << std::endl;
+	test_operator(lexer);
+	std::cout << "============================TEST SINGLE COMMENT============================" << std::endl;
+	test_single_comment(lexer);
+	std::cout << "============================TEST BLOCK COMMENT============================" << std::endl;
+	test_block_comment(lexer);
+}
 #endif
