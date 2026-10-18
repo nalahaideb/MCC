@@ -31,10 +31,8 @@ void test_numbers(Lexer & lexer)
 		std::cout << "testing: " << s << "... ";
 		try
 		{
-			std::pair< int, std::string > num = lexer.lex_num(s);
-			std::cout << "PASS: " << "num = " << num.first << ", str = "
-					  << num.second << std::endl;
-		}
+			std::cout << "PASS: " << lexer.lex_num(s) << std::endl;
+				}
 		catch (Error & e) {std::cout << "FAIL: " << e.message << std::endl;}
 	}
 }
@@ -64,9 +62,7 @@ void test_operator(Lexer & lexer)
 		std::cout << "testing: " << v << "... ";
 		try
 		{
-			auto s = lexer.lex_opr(k);
-			std::cout << "PASS:" << s.first << ","
-					  << s.second << std::endl;
+			std::cout << "PASS:" << lexer.lex_opr(k) << std::endl;
 		}
 		catch (Error & e)
 		{std::cout << "FAIL: " << e.message << std::endl;}
@@ -78,9 +74,7 @@ void test_operator(Lexer & lexer)
 		std::cout << "testing: " << v << "... ";
 		try
 		{
-			auto s = lexer.lex_opr(k);
-			std::cout << "PASS:" << s.first << ","
-					  << s.second << std::endl;
+			std::cout << "PASS:" << lexer.lex_opr(k) <<std::endl;
 		}
 		catch (Error & e)
 		{std::cout << "FAIL: " << e.message << std::endl;}

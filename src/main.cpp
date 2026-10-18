@@ -10,6 +10,7 @@ int main()
 	test_ident(lexer);
 	std::cout << "============================TEST OPRS============================" << std::endl;
 	test_operator(lexer);
+	std::cout << "============================TEST COMPOUND============================" << std::endl;
 	
 	return 0;
 }

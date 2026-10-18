@@ -19,29 +19,34 @@ class Error
 //types (and block comments)
 enum 
 	{
-		INT, BOOL, IF, ELSE, WHILE, RETURN, TRUE, FALSE, PRINT, READ, BCOM, ECOM, SCOM
+		INT, BOOL, IF, ELSE, WHILE,
+		RETURN, TRUE, FALSE, PRINT,
+		READ, BCOM, ECOM, SCOM
 	};
 
 // typedef std::pair< std::string, int > token;
 
-const static std::unordered_set< char > alphabet = {};
-const static std::unordered_set< char > numbers = {};
-const static std::unordered_set< char > opr_begin = {'<', '>', '!', '=', '+', '-', '/', '%', '.', '[', ']', '{', '}', '(', ')', '|', '&',};
+//operator map
 const static std::unordered_map< std::string, std::string > operators =
 	{
 		{"<", "LT"}, {">", "GT"}, {"==","EQ"},{"<=","LE"}, {"!=", "NEQ"},
 		{">=","GE"}, {"!","NOT"}, {"||","OR"}, {"&&","AND"}, {"(","LPAREN"},
 		{")","RPAREN"}, {"{","LBRACE"}, {"}","RBRACE"}, {"[", "LBRACK"},
-		{"", "RBRACK"}, {"+","PLUS"}, {"-","MINUS"}, {"/","DIV"}, {"*", "MULT"},
+		{"]", "RBRACK"}, {"+","PLUS"}, {"-","MINUS"}, {"/","DIV"}, {"*", "MULT"},
 		{"%","MOD"}, {".","DECIMAL"}, {"=","ASSIGN"}, //move maybe? {";","SEMI"},
 		{"++", "SINC"}, {"--", "SDEC"}, {"+=", "CADD"}, {"-=", "CMIN"},
 		{"/=", "CDIV"}, {"%=", "CMOD"}, {"*=", "CMULT"}
 	};
 
-//type map
-const static std::unordered_map< std::string, int > type_map =
+//keyword map
+const static std::unordered_map< std::string, int > keyword_map =
 	{
-		{"int", INT}, {"bool", BOOL}, {"if", IF}, {"else", ELSE}, {"while", WHILE}, {"return", RETURN}, {"true", TRUE}, {"false", FALSE}, {"print", PRINT}, {"read", READ}, {"/*", BCOM}, {"*/", ECOM}, {"//", SCOM}
+		{"int", INT}, {"bool", BOOL}, {"if", IF}, {"else", ELSE},
+		{"while", WHILE}, {"return", RETURN}, {"true", TRUE}, {"false", FALSE},
+		{"print", PRINT}, {"read", READ}, {"/*", BCOM}, {"*/", ECOM}, {"//", SCOM}
 	};
 
+//symbol sets
+//used for deducing an operator in run()
+const static std::unordered_set< char > operator_c = {'!', '/', '&', '|', '+', '-', '*', '%', '=', '(', ')', '[', ']', '{', '}', '<', '>'};
 #endif
