@@ -3,6 +3,8 @@
 #include "tests.h"
 int main()
 {
+
+	
 	Lexer lexer("");
 	std::cout << "============================TEST NUMS============================" << std::endl;
 	test_numbers(lexer);
@@ -10,7 +12,10 @@ int main()
 	test_ident(lexer);
 	std::cout << "============================TEST OPRS============================" << std::endl;
 	test_operator(lexer);
-	std::cout << "============================TEST COMPOUND============================" << std::endl;
+	std::cout << "============================TEST SINGLE COMMENT============================" << std::endl;
+	test_single_comment(lexer);
+	// std::cout << "============================TEST BLOCK COMMENT============================" << std::endl;
+	// test_block_comment(lexer);
 	
 	return 0;
 }

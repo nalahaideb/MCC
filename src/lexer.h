@@ -65,6 +65,7 @@ std::vector< std::vector< std::string > > Lexer::lex(std::string & input)
 {
 	int k = 0, line_ct = 0, type = -1;
 	std::string tok;
+	int input_size = input.size();
 	while (input[k] != '\0')
 	{
 		type = TYPE(input[k]);
@@ -80,7 +81,7 @@ std::vector< std::vector< std::string > > Lexer::lex(std::string & input)
 			{
 			const char c = input[k + 1];
 			//on case for comments ("//", "/*")
-			if (k < input.size() - 1 && (c == '/' || c == '*'))
+			if (k < input_size - 1 && (c == '/' || c == '*'))
 			{
 				//single comments
 				if (c == '/') single_comment_lexer(input, line_ct);
@@ -103,6 +104,7 @@ std::vector< std::vector< std::string > > Lexer::lex(std::string & input)
 		tokens[line_ct].push_back(tok);
 		++k;
 	}
+	return tokens;
 }
 
 //extend to float, check todo
@@ -194,7 +196,7 @@ void Lexer::block_comment_lexer(std::string & input, int & line_ct)
 {
 	if (input.empty()) return;
 	bool nested = false;
-	int k = 0;
+	int k = 0, input_size = input.size();
 	while (input[k] != '\0')
 	{
 		if (nested)
@@ -202,13 +204,15 @@ void Lexer::block_comment_lexer(std::string & input, int & line_ct)
 			Error e("[block_comment_lexer]: ILLEGAL NESTED COMMENT");
 			throw e;
 		}
-		else if (k < input.size() - 1 && input.substr(k, 2) == "/*")
+		else if (k < input_size - 1 && input.substr(k, 2) == "/*")
 			nested = true;
 		else if (input[k] == '\n' || input[k] == '\r')
 			++line_ct;
-		else if (k < input.size() - 1 && input.substr(k, 2) == "*/")
+		else if (k < input_size - 1 && input.substr(k, 2) == "*/")
 		{
-			input = input.substr(k++, input.size() - k);
+			//skip end of block comment
+			k++;
+			input = input.substr(k, input_size - k);
 			break;
 		}
 		++k;
@@ -227,7 +231,7 @@ void Lexer::single_comment_lexer(std::string & input, int & line_ct)
 	}
 	else
 	{
-		input.substr(k, input.size() - k);
+		input = input.substr(k, input.size() - k);
 		++line_ct;
 	}
 }

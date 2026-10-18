@@ -81,33 +81,39 @@ void test_operator(Lexer & lexer)
 	}	
 }
 
-/* void test_single_comment(Lexer & lexer) */
-/* { */
-	/* std::vector< std::string > input = {""}; */
-    /* for (auto & s : input) */
-	/* { */
-	/* 	std::cout << "testing: " << s << "... "; */
-	/* 	try */
-	/* 	{ */
-	/* 		std::cout << "PASS:"; */
-	/* 	} */
-	/* 	catch (Error & e) {std::cout << "FAIL: " << e.message << std::endl;} */
-	/* } */
-/* } */
+void test_single_comment(Lexer & lexer)
+{
+	std::vector< std::string > input = {"//\n", "///////\n", "/!!!!", "//test1234\n", "/*1234////*/", "///*!@#$%^&*)(*&^%$#*/\n"};
+    for (auto & s : input)
+	{
+		std::cout << "testing: " << s << "... ";
+		try
+		{
+			int k = 0;
+			lexer.single_comment_lexer(s, k);
+			std::cout << "PASS: "
+					  << s << std::endl;
+		}
+		catch (Error & e) {std::cout << "FAIL: " << e.message << std::endl;}
+	}
+}
 
-/* void test_block_comment(Lexer & lexer) */
-/* { */
-	/* std::vector< std::string > input = {""}; */
-    /* for (auto & s : input) */
-	/* { */
-	/* 	std::cout << "testing: " << s << "... "; */
-	/* 	try */
-	/* 	{ */
-	/* 		std::cout << "PASS:"; */
-	/* 	} */
-	/* 	catch (Error & e) {std::cout << "FAIL: " << e.message << std::endl;} */
-	/* } */
-/* } */
+void test_block_comment(Lexer & lexer)
+{
+	std::vector< std::string > input = {""};
+    for (auto & s : input)
+	{
+		std::cout << "testing: " << s << "... ";
+		try
+		{
+			int k = 0;
+			lexer.block_comment_lexer(s, k);
+			std::cout << "PASS: "
+					  << s << std::endl;
+		}
+		catch (Error & e) {std::cout << "FAIL: " << e.message << std::endl;}
+	}
+}
 
 /* void test_bool(Lexer & lexer) */
 /* { */
