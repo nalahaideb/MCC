@@ -3,6 +3,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <string>
+#include <fstream>
 #include "helper.h"
 
 #define MAX_INT 2147483647
@@ -39,11 +40,11 @@ const static std::unordered_map< std::string, std::string > operators =
 	};
 
 //keyword map
-const static std::unordered_map< std::string, int > keyword_map =
+const static std::unordered_map< std::string, std::string > keyword_map =
 	{
-		{"int", INT}, {"bool", BOOL}, {"if", IF}, {"else", ELSE},
-		{"while", WHILE}, {"return", RETURN}, {"true", TRUE}, {"false", FALSE},
-		{"print", PRINT}, {"read", READ}, {"/*", BCOM}, {"*/", ECOM}, {"//", SCOM}
+		{"int", "INT"}, {"bool", "BOOL"}, {"if", "IF"}, {"else", "ELSE"},
+		{"while", "WHILE"}, {"return", "RETURN"}, {"true", "TRUE"}, {"false", "FALSE"},
+		{"print", "PRINT"}, {"read", "READ"}
 	};
 
 //symbol sets

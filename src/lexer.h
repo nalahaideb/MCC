@@ -48,7 +48,7 @@ public:
 	inline std::string lex_opr(std::string input);
 	inline std::string lex_num(std::string & input);
 	inline std::vector< std::vector< std::string > > lex();
-	
+	inline void to_file(const std::string file);
 private:
     inline int TYPE(const int c);
 	
@@ -66,7 +66,7 @@ std::vector< std::vector< std::string > > Lexer::lex()
 {
 	int k = 0, line_ct = 0, type = -1;
 	std::string tok;
-	int tape_size = tape.size();
+	const int tape_size = tape.size();
 	while (tape[k] != '\0')
 	{
 		try
@@ -108,10 +108,14 @@ std::vector< std::vector< std::string > > Lexer::lex()
 			std::cout << "ERROR: " << e.message << std::endl;
 			return tokens;
 		}
-		std::cout << line_ct << " token = " << tok << std::endl;
+		
+		//std::cout << line_ct << " token = " << tok << std::endl;
+
 		//add output to current line vector
 		tok = INT_STR(line_ct) + " " + tok;
-		if (line_ct >= tokens.size())
+		
+		//cast to int to avoid warnings
+		if (line_ct >= static_cast<int>(tokens.size()))
 		{
 			std::vector< std::string > temp;
 			tokens.push_back(temp);
@@ -131,8 +135,7 @@ std::string Lexer::lex_num(std::string & input)
 	std::string ret;
 	while (ISNUM(input[k]))
 	{
-		ret += input[k];
-		++k;
+		ret += input[k++];
 		//add loop here to extract ints after sci notat / decimal
 	}
 	//throw error on digit count > MAX_INT digit count
@@ -220,10 +223,6 @@ void Lexer::block_comment_lexer(std::string & input, int & line_ct)
 			Error e("[block_comment_lexer]: ILLEGAL NESTED COMMENT");
 			throw e;
 		}
-		else if (k < input_size - 1 && input.substr(k, k + 1) == "/*")
-			nested = true;
-		else if (input[k] == '\n' || input[k] == '\r')
-			++line_ct;
 		else if (k < input_size - 1 && input.substr(k, 1 + k) == "*/")
 		{
 			//skip end of block comment
@@ -232,6 +231,10 @@ void Lexer::block_comment_lexer(std::string & input, int & line_ct)
 			comment_terminated = true;
 			break;
 		}
+		else if (k < input_size - 1 && input.substr(k, k + 1) == "/*")
+			nested = true;
+		else if (input[k] == '\n' || input[k] == '\r')
+			++line_ct;
 		++k;
 	}
 	if (!comment_terminated)
@@ -274,4 +277,24 @@ int Lexer::TYPE(const int c)
 		type = -1;
 	return type;
 }
+
+inline void Lexer::to_file(const std::string file)
+{
+	try
+	{
+		std::fstream f(file);
+		if (f.is_open())
+		{
+			for (const auto & k : tokens)
+				for (const auto & j : k)
+					f << j << '\n';
+		}
+	}
+	catch (Error & e)
+	{
+		std::ofstream x("../part1/part1/tokens.fail");
+		x << "error: failed to write to " + file + ", no such file exists";
+	}
+}
 #endif
+

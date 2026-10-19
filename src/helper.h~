@@ -1,5 +1,0 @@
-//
-inline std::string match_var(std::string & input)
-{
-    
-}
