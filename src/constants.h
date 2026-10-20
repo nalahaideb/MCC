@@ -4,28 +4,8 @@
 #include <unordered_map>
 #include <string>
 #include <fstream>
-#include "helper.h"
 
 #define MAX_INT 2147483647
-
-class Error
-{
-	public:
-	Error(const std::string m)
-	:message(m) {}
-	
-	const std::string message;
-};
-
-//types (and block comments)
-enum 
-	{
-		INT, BOOL, IF, ELSE, WHILE,
-		RETURN, TRUE, FALSE, PRINT,
-		READ, BCOM, ECOM, SCOM
-	};
-
-// typedef std::pair< std::string, int > token;
 
 //operator map
 const static std::unordered_map< std::string, std::string > operators =
@@ -34,12 +14,11 @@ const static std::unordered_map< std::string, std::string > operators =
 		{">=","GE"}, {"!","NOT"}, {"||","OR"}, {"&&","AND"}, {"(","LPAREN"},
 		{")","RPAREN"}, {"{","LBRACE"}, {"}","RBRACE"}, {"[", "LBRACK"},
 		{"]", "RBRACK"}, {"+","PLUS"}, {"-","MINUS"}, {"/","DIV"}, {"*", "MULT"},
-		{"%","MOD"}, {"=","ASSIGN"}, //move maybe? {".","DECIMAL"}, {";","SEMI"},
-		{"++", "SINC"}, {"--", "SDEC"}, {"+=", "CADD"}, {"-=", "CMIN"},
-		{"/=", "CDIV"}, {"%=", "CMOD"}, {"*=", "CMULT"}
+		{"%","MOD"}, {"=","ASSIGN"}, {"++", "SINC"}, {"--", "SDEC"}, {"+=", "CADD"},
+		{"-=", "CMIN"}, {"/=", "CDIV"}, {"%=", "CMOD"}, {"*=", "CMULT"}, {";", "SEMI"}
 	};
 
-//keyword map
+//keyword map, this probably doesnt need to be a hashtable, just make a simple "to_upper" func instead and make it an unordered set
 const static std::unordered_map< std::string, std::string > keyword_map =
 	{
 		{"int", "INT"}, {"bool", "BOOL"}, {"if", "IF"}, {"else", "ELSE"},

@@ -1,26 +1,9 @@
 #ifndef LEXER_H
 #define LEXER_H
 #include "constants.h"
+#include "error.h"
+#include "helper.h"
 #include <vector>
-//==============================================================================
-/*
-  TODO:
-  [x] lex vars
-  [x] lex int/floats
-  [] lex sci notat floats (1E42, 42e10, -1.24e5, etc)
-  [] lex expressions
-  [x] add support for extended assignment ops (-=, *=, ++, etc)
-  [] lex with / without spaces
-  [x] strip comments
-  [] lex tokens into vectors based on line
-  [x] block comments keep track of line count
-  [] organize symbol checks into sets (?)
-  [] make choosing lex function for "run()" more efficient (with bits?)
-  [] fix single-comment lexer throwing an erro when 'EOF' reached before '\n'
-  [] short-circuit booleans
-*/
-//==============================================================================
-
 //==============================================================================
 /*
   OVERVIEW:
@@ -30,21 +13,50 @@
   - "run()" handles the type deduction based off character
   - "run()" will call the correct function to consume characters from the input
   - "run()" collects output tokens as strings in a vector for file printing
+  - "lex_keyword()" consumes valid TYPE symbols, takes precedence over lex_var()
   - "lex_var()" consumes valid IDENT symbols
   - "lex_num()" consumes valid NUM symbols (float, int, double, etc)
   - "lex_op()" consumes valid OPR symbols (==, !, *, ++, etc)
-  
 */
 //==============================================================================
+
+//==============================================================================
+/*
+  TODO:
+  [x] lex vars
+  [x] lex int/floats
+  [] lex sci notat floats (1E42, 42e10, -1.24e5, etc)
+  [x] add support for extended assignment ops (-=, *=, ++, etc)
+  [x] lex with / without spaces
+  [x] strip comments
+  [x] lex tokens into vectors based on line
+  [x] block comments keep track of line count
+  [] tag tokens with type instead of recomputing when placed in "tokens"
+  [] read input from file
+  [] output tokens vector to file
+  [] fix single-comment lexer throwing an error when 'EOF' reached before '\n'
+
+  CLEANUP / OPTIMIZATION:
+  [] probably dont need to actually "consume" the string, doing substr is expensive
+  [] im leaving ';' in the TYPE function as a standalone, idk where to put it atm
+  [] organize symbol checks into sets (?)
+  [] make choosing lex function for "run()" more efficient (with bits?)
+  [] template / generalize functions, lots of duplicate code atm (block comm / braces)
+  [] make variables more explicit (length or # of lines can never be negative, make them size_t, etc)
+*/
+//==============================================================================
+
 class Lexer
 {
 public:
 	Lexer(const std::string & input)
 		:tape(input)
 	{}
+
+	//comments
     inline void block_comment_lexer(std::string & input, int & line_ct);
 	inline void single_comment_lexer(std::string & input, int & line_ct);
-	inline int lex_type(std::string & input);
+	inline std::string lex_keyword(std::string & input);
 	inline std::string lex_var(std::string & input);
 	inline std::string lex_opr(std::string & input);
 	inline std::string lex_num(std::string & input);
@@ -52,7 +64,7 @@ public:
 	inline void to_file(const std::string file);
 private:
     inline int TYPE(const int c);
-	inline std::string select_token(const char c_, int & line_ct, const int tape_size);
+	inline std::string select_token(const char c_, int & line_ct);
 	//hashtables
     constexpr static const auto * tok_key = &keyword_map;
     constexpr static const auto * tok_op = &operators;
@@ -67,7 +79,6 @@ std::vector< std::vector< std::string > > Lexer::lex()
 {
 	int line_ct = 0;
 	std::string tok;
-	const int tape_size = tape.size();
 	while (!tape.empty())
 	{
 		const char c_ = tape[0];
@@ -76,8 +87,8 @@ std::vector< std::vector< std::string > > Lexer::lex()
 		{
 			try
 			{
-				//std::cout << "lextok = [" << c_ << "]\n";
-				tok = select_token(c_, line_ct, tape_size);
+				std::cout << "selecting, tape = [" << tape  <<"]\n";
+				tok = select_token(c_, line_ct);
 			}
 			catch (Error & e) //break on any error
 			{
@@ -87,21 +98,35 @@ std::vector< std::vector< std::string > > Lexer::lex()
 			//add output to current line vector (if it wasnt a comment)
 			if (!tok.empty())
 			{
-				tok = INT_STR(line_ct) + " " + tok;		
-				//cast to int to avoid warnings
-				if (line_ct >= static_cast<int>(tokens.size()))
+				std::cout << "[lex] TOK NOT EMPTY\n";
+				tok = INT_STR(line_ct) + " " + tok;
+				std::cout << "[lex] linect, tokenv size = " << line_ct << ", " << tokens.size() << std::endl;
+				//cast to int to avoid warnings about signedness
+				if (line_ct > static_cast<int>(tokens.size()))
 				{
-					std::vector< std::string > temp;
-					tokens.push_back(temp);
+					while (static_cast<int>(tokens.size()) <= line_ct)
+					{
+						std::vector< std::string > temp;
+						tokens.push_back(temp);
+					}
 				}
 				tokens[line_ct].push_back(tok);
 			}
 		}
 		else
 		{
-			tape = tape.substr(1, tape.size() - 1);
+			std::cout << "[lex] input size = " << tape.size() << std::endl;
+			std::cout << "[lex] SKIP SPACE\n";
+			if (!tape.empty())
+				tape.replace(0, 1, "");
+				//tape = tape.substr(1, tape.size() - 1);
+			else
+				break;
 		}
 	}
+	std::string end_line = {INT_STR(line_ct)};
+	std::vector< std::string > end_of_file_v = {end_line + " EOF"};
+	tokens.push_back(end_of_file_v);
 	return tokens;
 }
 
@@ -128,7 +153,7 @@ std::string Lexer::lex_num(std::string & input)
 		Error e("[lex_num]: NUM LARGER THAN MAX");
 		throw e;
 	}
-	else //consume (size of int str symbols), return pair
+	else //consume (size of int str symbols)
 	{
 		input = input.substr(ret.size(), input.size() - ret.size());
 		return ret;
@@ -152,16 +177,14 @@ std::string Lexer::lex_var(std::string & input)
 		//const char c = input[k];
 		c = input[k];
 	    if (ISALPHA(c) || ISNUM(c) || c == '_')
-		{
 			ret += c;
-		}
 		else 
 			break;
 		++k;
 	}
-	if (k) input = input.substr(k, input.size() - k);
-	// std::cout << "input:" << input << std::endl;
-	std::cout << "leaving\n";
+	if (!ret.empty()) input.replace(0, ret.size(), "");
+	std::cout << "[lexvar] exiting with ret = [" << ret
+			  << "], input = [" << input << "]\n";
 	return ret;
 }
 
@@ -169,18 +192,18 @@ std::string Lexer::lex_var(std::string & input)
 //goes for "/*" too
 std::string Lexer::lex_opr(std::string & input)
 {
-	int k = 0;
+	size_t k = 0;
 	std::string ret;
-	std::cout << "input = [" << input[k] << "]" << std::endl;
-	
-	while (input[k] != '\0')
+	std::cout << "[lexopr] in opr\n";
+	while (k < input.size())
 	{
 		if (single_op->find(input[k]) == single_op->end() || input[k] == ' ')
 			break;
 		ret += input[k];
 		++k;
 	}
-	std::cout << "ret = [" << ret << "]\n";
+	std::cout << "[lexopr] ret = " << ret << std::endl;
+
 	//check if string is in operator tokens table
 	const auto opr = tok_op->find(ret);
 	//throw error on malformed operator
@@ -191,55 +214,42 @@ std::string Lexer::lex_opr(std::string & input)
 	}
 	else
 	{
-		input = input.substr(ret.size(), input.size() - ret.size());
+		if (!ret.empty())
+			input.replace(0, ret.size(), "");
 		return opr->second;
 	}
 }
 
-//preprocessing, removes all block comments, throws error on nested
+//removes all block comments, throws error on nested
 void Lexer::block_comment_lexer(std::string & input, int & line_ct)
 {
 	if (input.empty()) return;
-	bool comment_unterminated = true;
-	int k = 0, size = input.size();
-	while (input[k] != '\0')
-	{
-		//to check for end-comment symbols
-		std::string t = input.substr(k, k + 1);
-		if (k < size && t == "*/")
-		{
-			std::cout << "tingus:" << input.substr(k, input.size() - k - 2) << std::endl;
-			if (static_cast<int>(input.size() - k - 2) >= 0)
-				input = input.substr(k, input.size() - k - 2);
-			else input = "";
-			comment_unterminated = false;
-			break;
-		}
-		else if (k < size && t == "/*")
-		{
-			Error e("[block_comment_lexer]: ILLEGAL NESTED COMMENT OPENER");
-			throw e;
-		}
-		else if (input[k] == '\n') ++line_ct;
-		++k;
-	}
-	if (comment_unterminated)
+	size_t k = 0, end = input.find("*/"), size = input.size();
+	if (end == std::string::npos || end <= 0)
 	{
 		Error e("[block_comment_lexer]: COMMENT UNTERMINATED");
 		throw e;
 	}
-	std::cout << "returning with" << input << std::endl;
+	while (k < end + 1)
+	{
+		if (input[k] == '\n') ++line_ct;
+		++k;
+	}
+
+	input = input.substr(k + 1, size - k);
+	std::cout << "input after substr = " << input << std::endl;
+	// input.replace(0, 1, "");
 }
 
 //removes input until '\n' is found
 //single comment at the end of file will throw error, fix later
 void Lexer::single_comment_lexer(std::string & input, int & line_ct)
 {
-    size_t k = input.find('\n'); 
+    size_t k = input.find('\n');
+	//file ends with comment, set input to empty
     if (k == std::string::npos)
 	{
-		Error e("[single_comment_lexer]: EOF REACHED: ");
-		throw e;
+		input = "";
 	}
 	else
 	{
@@ -262,13 +272,17 @@ int Lexer::TYPE(const int c)
 		type = 2;
 	else if (c == '\n' || c == '\r') //newline
 		type = 3;
+	else if (c == ';') //semi, leaving here for now, should move later
+		type = 4;
+	std::cout << "[type] returning type:" << type << std::endl;
 	return type;
 }
 
-std::string Lexer::select_token(const char c_, int & line_ct, const int tape_size)
+std::string Lexer::select_token(const char c_, int & line_ct)
 {
 	int type = TYPE(c_);
 	std::string tok = "";
+	std::cout << "[seltok], type = " << type << ", char: " << c_ << std::endl;
 	switch (type)
 	{
 	case 0: //int
@@ -279,17 +293,17 @@ std::string Lexer::select_token(const char c_, int & line_ct, const int tape_siz
 		break;
 	case 2: //operator
 		{
-			//this will cause problems, fix later
-			const char c = tape[1];
-			// std::cout << "c = [" << c << "]\n";
+			std::cout << "case 2, tape = [" << tape << "]\n"; 
 			//on case for comments ("//", "/*")
-			if (tape_size > 1 && (c == '/' || c == '*'))
+			char c = ' ';
+			if (tape.size() > 1)
 			{
-				//single comments
-				if (c == '/') single_comment_lexer(tape, line_ct);
-				//block comments
-				else block_comment_lexer(tape, line_ct); 
+			    c = tape[1];
 			}
+			//single comments
+			if (c == '/') single_comment_lexer(tape, line_ct);
+			//block comments
+			else if (c == '*') block_comment_lexer(tape, line_ct);
 			//regular operator
 			else tok = lex_opr(tape);
 			break;
@@ -298,11 +312,16 @@ std::string Lexer::select_token(const char c_, int & line_ct, const int tape_siz
 		line_ct++;
 		tape = tape.substr(1, tape.size() - 1);
 		break;
+	case 4:
+		tok = "SEMI";
+		tape = tape.substr(1, tape.size() - 1);
+		break;
 	default:
 		std::string f = {c_};
 		Error e("[lex]: INVALID SYMBOL: '" + f + "'");
 		throw e;
 	}
+	std::cout << "[seltok] returning with [" << tok <<"]\n";
 	return tok;
 }
 

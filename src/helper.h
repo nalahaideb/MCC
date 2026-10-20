@@ -31,4 +31,18 @@ inline std::string INT_STR(int k)
 	}
 	return ret;
 }
+
+//block statements or groupers should start and end with the same thing
+//BEGIN = begin symbol, END = end symbol
+//if nestable, will avoid nested checks, i.e. "(())" != "/* /* */ */"
+/* inline bool IS_VALID_BLOCK(std::string & s, std::string BEGIN, std::string END, bool nestable) */
+/* { */
+/*     size_t start = s.find(BEGIN), stop = s.find(END); */
+/* 	if (start == std::string::npos || stop == std::string::npos) */
+/* 		return false; */
+/* 	else */
+/* 	{ */
+/* 		if (!nestable) */
+/* 	} */
+/* } */
 #endif
