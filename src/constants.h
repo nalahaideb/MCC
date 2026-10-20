@@ -34,7 +34,7 @@ const static std::unordered_map< std::string, std::string > operators =
 		{">=","GE"}, {"!","NOT"}, {"||","OR"}, {"&&","AND"}, {"(","LPAREN"},
 		{")","RPAREN"}, {"{","LBRACE"}, {"}","RBRACE"}, {"[", "LBRACK"},
 		{"]", "RBRACK"}, {"+","PLUS"}, {"-","MINUS"}, {"/","DIV"}, {"*", "MULT"},
-		{"%","MOD"}, {".","DECIMAL"}, {"=","ASSIGN"}, //move maybe? {";","SEMI"},
+		{"%","MOD"}, {"=","ASSIGN"}, //move maybe? {".","DECIMAL"}, {";","SEMI"},
 		{"++", "SINC"}, {"--", "SDEC"}, {"+=", "CADD"}, {"-=", "CMIN"},
 		{"/=", "CDIV"}, {"%=", "CMOD"}, {"*=", "CMULT"}
 	};

@@ -62,7 +62,8 @@ void test_operator(Lexer & lexer)
 		std::cout << "testing: " << v << "... ";
 		try
 		{
-			std::cout << "PASS:" << lexer.lex_opr(k) << std::endl;
+			auto f = k;
+			std::cout << "PASS:" << lexer.lex_opr(f) << std::endl;
 		}
 		catch (Error & e)
 		{std::cout << "FAIL: " << e.message << std::endl;}
@@ -74,7 +75,8 @@ void test_operator(Lexer & lexer)
 		std::cout << "testing: " << v << "... ";
 		try
 		{
-			std::cout << "PASS:" << lexer.lex_opr(k) <<std::endl;
+			auto f = k;
+			std::cout << "PASS:" << lexer.lex_opr(f) <<std::endl;
 		}
 		catch (Error & e)
 		{std::cout << "FAIL: " << e.message << std::endl;}
