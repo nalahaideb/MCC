@@ -1,0 +1,6 @@
+1 INT
+1 IDENT ifx
+1 ASSIGN
+1 NUM 7
+1 SEMI
+1 EOF

@@ -6,7 +6,6 @@
 #include <fstream>
 
 #define MAX_INT 2147483647
-
 //operator map
 const static std::unordered_map< std::string, std::string > operators =
 	{
@@ -27,6 +26,7 @@ const static std::unordered_map< std::string, std::string > keyword_map =
 	};
 
 //symbol sets
-//used for deducing an operator in run()
-const static std::unordered_set< char > operator_c = {'!', '/', '&', '|', '+', '-', '*', '%', '=', '(', ')', '[', ']', '{', '}', '<', '>'};
+//used for deducing an operator in lex()
+const static std::unordered_set< char > single_op = {'!', '/', '&', '|', '+', '-', '*', '%', '=', '(', ')', '[', ']', '{', '}', '<', '>'};
+
 #endif
