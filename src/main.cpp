@@ -1,17 +1,24 @@
 #include <iostream>
 #include "lexer.h"
 #include "tests.h"
-int main()
+int main(int argc, char * argv[])
 {
 	//if flag == tokens run lexer, if flag == ast run lexer then parser, if flag == typed run lexer then parser then typer, etc...
 	std::string input;
-	std::cin >> input;
-	
 	Lexer lexer;
-	// lexer.read_file("part1/part1/tokens.mc");
-	lexer.read_file(input);
-	std::vector< std::string > output = lexer.lex();
-	
+
+	int filenum = -1;
+	for (int i =0; i < argc; ++i)
+	{
+		std::string z = static_cast<std::string>(argv[i]);
+		if (z.find(".mc") != std::string::npos) filenum = i;
+	}
+	//read file arg
+	if (filenum >= 0)
+	{
+		lexer.read_file(argv[2]);
+		std::vector< std::string > output = lexer.lex();
+	}	
 	// for (const auto & v : output)
 	// {
 	// 	std::cout << v << std::endl;
