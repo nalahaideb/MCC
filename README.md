@@ -1,1 +1,1 @@
-A MiniC RISC-V compiler
+A MiniC to RISC-V compiler written in C++
