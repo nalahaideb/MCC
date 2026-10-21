@@ -7,7 +7,6 @@
 //==============================================================================
 /*
   OVERVIEW:
-
   - each function does its own designated task, "consuming" chars that match it
   - they return the modified input to "lex()"
   - "lex()" handles the type deduction based off character
@@ -35,7 +34,11 @@
   [x] read input from file
   [x] output tokens vector to file
   [x] fix single-comment lexer throwing an error when 'EOF' reached before '\n'
-  [] fix unary operator matching first, switch to longest match
+  [x] fix unary operator matching first, switch to longest match
+  [] arg passing for file via flags (i.e. "mcc --tokens.mc")
+  [] integer overflow / underflow checks
+  [] switch line read to sstream buffer file content read
+  [] run tests
   
   CLEANUP / OPTIMIZATION:
   [] probably dont need to actually "consume" the string, doing substr is expensive
@@ -50,43 +53,56 @@
 class Lexer
 {
 public:
-	Lexer(const std::string & input)
-		:tape(input)
-	{}
+	Lexer() {}
 	
 	//comments
 	inline std::vector< std::string > lex();
-	inline void to_file(const std::string file);
+	inline void read_file(const std::string file);
+private:
 	inline void assign_tape(const std::string s)
 	{ tape = s; }
-private:
-    inline void block_comment_lexer(std::string & input, int & line_ct);
+	inline void to_file();
+	//member functions
+	inline void block_comment_lexer(std::string & input, int & line_ct);
 	inline void single_comment_lexer(std::string & input);
+    inline int TYPE(const int c);
+	inline int lex_opr_helper(const char c, bool flag);
 	inline std::string lex_var(std::string & input);
 	inline std::string lex_opr(std::string & input);
 	inline std::string lex_num(std::string & input);
-    inline int TYPE(const int c);
 	inline std::string select_token(const char c_, int & line_ct);
-	inline int lex_opr_helper(const char c, bool flag);
+
 	//hashtables / sets
     constexpr static const auto * tok_key = &keyword_map;
     constexpr static const auto * tok_op = &operators;
 	constexpr static const auto * single_op_ = &single_op;
+
 	//return vector based on line
 	std::vector< std::string > tokens;
+
 	//copy of input
 	std::string tape;
+
+	//file name copy
+	std::string file_name;
 };
 
 std::vector< std::string > Lexer::lex()
 {
 	int line_ct = 1;
 	std::string tok;
+
+	//return on empty file
+	if (tape.empty())
+	{
+		tokens = {std::to_string(line_ct) + " EOF"};
+	}
+
 	while (!tape.empty())
 	{
 		const char c_ = tape[0];
 		//ignore whitespace
-		if (c_ != ' ')
+		if (c_ != ' ' && c_ != '\t')
 		{
 			try
 			{
@@ -94,7 +110,8 @@ std::vector< std::string > Lexer::lex()
 			}
 			catch (Error & e) //break on any error
 			{
-				std::cout << "ERROR: " << e.message << std::endl;
+				std::ofstream f(file_name + ".err");
+				f << "error: line " + std::to_string(line_ct) + ":\n";
 				return tokens;
 			}
 			//add output to current line vector (if it wasnt a comment)
@@ -106,17 +123,19 @@ std::vector< std::string > Lexer::lex()
 			}
 		}
 		else
-		{
 			if (!tape.empty())
 				tape.replace(0, 1, "");
 			else
-			{
 				break;
-			}
-		}
 	}
 	//break loop, add EOF to token list
 	tokens.push_back(std::to_string(line_ct) + " EOF");
+
+	//write output to file
+	to_file();
+
+	//maybe doesnt need to return the tokens since its writing to file
+	//could fix this later on
 	return tokens;
 }
 
@@ -124,7 +143,7 @@ std::vector< std::string > Lexer::lex()
 //check assmt for overflow
 std::string Lexer::lex_num(std::string & input)
 {
-	long int k = 0;
+	long long int k = 0;
 	std::string ret;
 	while (ISNUM(input[k]))
 	{
@@ -137,8 +156,9 @@ std::string Lexer::lex_num(std::string & input)
 		Error e("[lex_int]: NUM DIGIT COUNT > MAX");
 		throw e;
 	}
-	
+
 	//attempt to build num, throw error if larger than MAX_INT
+	k = std::stoll(ret);
 	if (k > MAX_INT)
 	{
 		Error e("[lex_num]: NUM LARGER THAN MAX");
@@ -146,7 +166,6 @@ std::string Lexer::lex_num(std::string & input)
 	}
 	else //consume (size of int str symbols)
 	{
-		//input = input.substr(ret.size(), input.size() - ret.size());
 		input.replace(0, ret.size(), "");
 		k = 0;
 		//clear leading zeros
@@ -160,8 +179,7 @@ std::string Lexer::lex_num(std::string & input)
 std::string Lexer::lex_var(std::string & input)
 {
 	int k = 0;
-	std::string ret;
-	
+	std::string ret;	
 	//throw on non-char / underscore initial value
 	if (!ISALPHA(input[k]) && input[k] != '_')
 	{
@@ -180,8 +198,9 @@ std::string Lexer::lex_var(std::string & input)
 			break;
 		++k;
 	}
+	//erase token from str
 	if (!ret.empty()) input.replace(0, ret.size(), "");
-	
+
 	//check if keyword
 	if (tok_key->find(ret) != tok_key->end())
 		return tok_key->find(ret)->second;
@@ -189,8 +208,7 @@ std::string Lexer::lex_var(std::string & input)
 	return "IDENT " + ret;
 }
 
-//need to fix returning "//" as an operator instead of comment
-//goes for "/*" too
+//extract operator tokens
 std::string Lexer::lex_opr(std::string & input)
 {
 	std::string ret = {input[0]};
@@ -235,7 +253,6 @@ void Lexer::block_comment_lexer(std::string & input, int & line_ct)
 			++line_ct;
 		++k;
 	}
-
 	input = input.substr(k + 1, size - k);
 }
 
@@ -314,22 +331,30 @@ std::string Lexer::select_token(const char c_, int & line_ct)
 	return tok;
 }
 
-inline void Lexer::to_file(const std::string file)
+void Lexer::read_file(const std::string file)
 {
-	try
+	std::ifstream f(file);
+    if (!f.is_open())
 	{
-		std::ofstream f(file);
-		if (f.is_open())
-		{
-			for (const auto & k : tokens)
-					f << k << '\n';
-		}
-	}
-	catch (Error & e)
-	{
-		std::ofstream x("../part1/part1/tokens.fail");
-		x << "error: failed to write to " + file + ", no such file exists";
-	}
+		Error e({"[read_file]: FAILED TO OPEN FILE \"" + file + "\""});
+		std::cout << e.message << std::endl;
+		throw e;
+    }
+
+    std::stringstream buffer;
+    buffer << f.rdbuf();
+    f.close();
+	file_name = file.substr(0, file.find('.'));
+    tape = buffer.str();
+}
+
+void Lexer::to_file()
+{
+	std::string output_file = file_name + ".out";
+	std::ofstream f(output_file);
+	if (f.is_open())
+		for (const auto & k : tokens)
+			f << k << '\n';
 }
 
 #endif
