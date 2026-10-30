@@ -5,18 +5,17 @@
 #include <string>
 #include <fstream>
 #include <sstream>
-
+#include "token.h"
 #define MAX_INT 2147483647
+
 //operator map
 const static std::unordered_map< std::string, std::string > operators =
 	{
 		{"<", "LT"}, {">", "GT"}, {"==","EQ"},{"<=","LE"}, {"!=", "NE"},
-		{">=","GE"}, {"!","NOT"}, {"||","OR"}, {",", "COLON"}, {"&&","AND"},
+		{">=","GE"}, {"!","NOT"}, {"||","OR"}, {",", "COMMA"}, {"&&","AND"},
 		{"(","LPAREN"}, {")","RPAREN"}, {"{","LBRACE"}, {"}","RBRACE"},
-		{"[", "LBRACK"}, {"]", "RBRACK"}, {"+","PLUS"}, {"-","MINUS"},
-		{"/","SLASH"}, {"*", "MULT"}, {"%","PERCENT"}, {"=","ASSIGN"},
-		{"++", "SINC"}, {"--", "SDEC"}, {"+=", "CADD"}, {"-=", "CMIN"},
-		{"/=", "CDIV"}, {"%=", "CMOD"}, {"*=", "CMULT"}, {";", "SEMI"}
+		{"+","PLUS"}, {"-","MINUS"}, {"/","SLASH"}, {"*", "STAR"},
+		{"%","PERCENT"}, {"=","ASSIGN"}, {";", "SEMI"}
 	};
 
 //keyword map, this probably doesnt need to be a hashtable, just make a simple "to_upper" func instead and make it an unordered set
@@ -29,6 +28,10 @@ const static std::unordered_map< std::string, std::string > keyword_map =
 
 //symbol sets
 //used for deducing an operator in lex()
-const static std::unordered_set< char > single_op = {'!', '/', '&', '|', '+', '-', '*', '%', '=', '(', ')', '[', ']', '{', '}', '<', '>', ','};
+const static std::unordered_set< char > single_op =
+	{
+		'!', '/', '&', '|', '+', '-', '*', '%', '=',
+		'(', ')', '[', ']', '{', '}', '<', '>', ','
+	};
 
 #endif

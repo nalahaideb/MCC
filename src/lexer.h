@@ -3,7 +3,9 @@
 #include "constants.h"
 #include "error.h"
 #include "helper.h"
+#include "token.h"
 #include <vector>
+
 //==============================================================================
 /*
   OVERVIEW:
@@ -25,6 +27,7 @@
   [x] lex vars
   [/] lex int/floats
   [] lex sci notat floats (1E42, 42e10, -1.24e5, etc)
+  [] replace current string return values with token return values
   [x] add support for extended assignment ops (-=, *=, ++, etc)
   [x] lex with / without spaces
   [x] strip comments
@@ -35,10 +38,9 @@
   [x] output tokens vector to file
   [x] fix single-comment lexer throwing an error when 'EOF' reached before '\n'
   [x] fix unary operator matching first, switch to longest match
-  [] arg passing for file via flags (i.e. "mcc --tokens.mc")
-  [] integer overflow / underflow checks
-  [] switch line read to sstream buffer file content read
-  [] run tests
+  [x] arg passing for file via flags (i.e. "mcc --tokens.mc")
+  [x] switch line read to sstream buffer file content read
+  [x] run tests
   
   CLEANUP / OPTIMIZATION:
   [] probably dont need to actually "consume" the string, doing substr is expensive
@@ -111,7 +113,7 @@ std::vector< std::string > Lexer::lex()
 			catch (Error & e) //break on any error
 			{
 				std::ofstream f(file_name + ".err");
-				f << "error: line " + std::to_string(line_ct) + ":\n";
+				f << "error: line " + std::to_string(line_ct) + ": ";
 				return tokens;
 			}
 			//add output to current line vector (if it wasnt a comment)
@@ -150,13 +152,6 @@ std::string Lexer::lex_num(std::string & input)
 		ret += input[k++];
 		//add loop here to extract ints after sci notat / decimal
 	}
-	//throw error on digit count > MAX_INT digit count
-	if (ret.size() > 11)
-	{
-		Error e("[lex_int]: NUM DIGIT COUNT > MAX");
-		throw e;
-	}
-
 	//attempt to build num, throw error if larger than MAX_INT
 	k = std::stoll(ret);
 	if (k > MAX_INT)
