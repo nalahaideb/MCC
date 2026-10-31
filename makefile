@@ -13,8 +13,8 @@ r run:
 clean:
 	rm -f mcc
 	rm src/*~
-	rm src/*.mc
-	rm src/*.out
-	rm src/*.err
+	rm *.mc
+	rm *.out
+	rm *.err
 
 

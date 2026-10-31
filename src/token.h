@@ -4,9 +4,14 @@
 
 struct token
 {
-	std::string value;
+	token(const std::string r, const std::string v)
+		:raw(r), value(v) {}
+	
+	std::string printable() const
+	{ return value + " " + raw; }
+	bool empty()
+	{ return raw.empty() && value.empty(); }
 	std::string raw;
-token(const std::string v, const std::string r)
-	: value(v), raw(r) {}
+	std::string value;
 };
 #endif

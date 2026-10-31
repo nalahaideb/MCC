@@ -2,14 +2,13 @@
 #define NODE_H
 #include "token.h"
 
-class Node
+struct Node
 {
- public:
- Node(const token & x,
-	  const Node * l,
-	  const Node * r)
-	 :t(x), left(l), right(r) {}
-	token t;
+	symbol s;
 	Node * l, * r;
+	Node(const symbol & sym,
+		 Node * const left,
+		 Node * const right)
+		:s(sym), l(left), r(right) {}
 };
 #endif

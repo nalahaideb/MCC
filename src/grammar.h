@@ -1,7 +1,48 @@
 #ifndef GRAMMAR_H
 #define GRAMMAR_H
-#include <map>
-#include "token.h"
+#include <set>
+#include "constants.h"
+#include "production.h"
+
+struct grammar
+{
+    std::set< symbol > terminals =
+		{"Type", "Primary", "NUM", "ID"};
+    std::set< symbol > nonterminals
+		{
+			"Program", "FunDecl", "Params", "Param", "Block",
+			"Item", "Decl", "Args", "Stmt", "Exp", "AndExp",
+			"EqExp", "RelExp", "AddExp", "MulExp", "Unary"
+		};
+	
+    symbol start;
+	
+    std::vector< production > productions
+		{
+			{"Program", {"FunDecl"}},
+			{"Params", {}},
+			{"Param", {}},
+			{"Type", {}},
+			{"Block", {}},
+			{"Item", {}},
+			{"Decl", {}},
+			{"Stmt", {}},
+			{"Exp", {}},
+			{"AndExp", {}},
+			{"EqExp", {}},
+			{"RelExp", {}},
+			{"AddExp", {}},
+			{"MulExp", {}},
+			{"Unary", {}},
+			{"Primary", {}},
+			{"Args", {}}
+		};
+	
+    bool is_terminal(const symbol & s) const
+	{ return terminals.find(s) != terminals.end(); }
+};
+
+
 /*
 Program ::= FunDecl { FunDecl }	
 
@@ -49,14 +90,4 @@ Primary ::= NUM | "true" | "false"
 Args ::= Exp { "," Exp }
 */
 
-class Grammar
-{
- public:
-
-	std::map< token > rules =
-		{
-			
-		};
-	
-};
 #endif

@@ -58,7 +58,7 @@ public:
 	Lexer() {}
 	
 	//comments
-	inline std::vector< std::string > lex();
+	inline std::vector< std::pair< std::string, token > > lex();
 	inline void read_file(const std::string file);
 private:
 	inline void assign_tape(const std::string s)
@@ -69,10 +69,10 @@ private:
 	inline void single_comment_lexer(std::string & input);
     inline int TYPE(const int c);
 	inline int lex_opr_helper(const char c, bool flag);
-	inline std::string lex_var(std::string & input);
-	inline std::string lex_opr(std::string & input);
-	inline std::string lex_num(std::string & input);
-	inline std::string select_token(const char c_, int & line_ct);
+	inline token lex_var(std::string & input);
+	inline token lex_opr(std::string & input);
+	inline token lex_num(std::string & input);
+	inline token select_token(const char c_, int & line_ct);
 
 	//hashtables / sets
     constexpr static const auto * tok_key = &keyword_map;
@@ -80,7 +80,7 @@ private:
 	constexpr static const auto * single_op_ = &single_op;
 
 	//return vector based on line
-	std::vector< std::string > tokens;
+	std::vector< std::pair< std::string, token > > tokens;
 
 	//copy of input
 	std::string tape;
@@ -89,15 +89,19 @@ private:
 	std::string file_name;
 };
 
-std::vector< std::string > Lexer::lex()
+std::vector< std::pair< std::string, token > > Lexer::lex()
 {
 	int line_ct = 1;
-	std::string tok;
+
+	//empty token
+	token tok("","");
 
 	//return on empty file
 	if (tape.empty())
 	{
-		tokens = {std::to_string(line_ct) + " EOF"};
+		token t("", "EOF");
+		tokens = {{std::to_string(line_ct), t}};
+		return tokens;
 	}
 
 	while (!tape.empty())
@@ -119,9 +123,7 @@ std::vector< std::string > Lexer::lex()
 			//add output to current line vector (if it wasnt a comment)
 			if (!tok.empty())
 			{
-			    tok = std::to_string(line_ct) + " " + tok;
-		    	//cast to int to avoid warnings about signedness
-				tokens.push_back(tok);
+				tokens.push_back({std::to_string(line_ct), tok});
 			}
 		}
 		else
@@ -131,7 +133,8 @@ std::vector< std::string > Lexer::lex()
 				break;
 	}
 	//break loop, add EOF to token list
-	tokens.push_back(std::to_string(line_ct) + " EOF");
+	token t("", "EOF");
+	tokens.push_back({std::to_string(line_ct), t});
 
 	//write output to file
 	to_file();
@@ -142,8 +145,7 @@ std::vector< std::string > Lexer::lex()
 }
 
 //extend to float, check todo
-//check assmt for overflow
-std::string Lexer::lex_num(std::string & input)
+token Lexer::lex_num(std::string & input)
 {
 	long long int k = 0;
 	std::string ret;
@@ -152,6 +154,7 @@ std::string Lexer::lex_num(std::string & input)
 		ret += input[k++];
 		//add loop here to extract ints after sci notat / decimal
 	}
+	
 	//attempt to build num, throw error if larger than MAX_INT
 	k = std::stoll(ret);
 	if (k > MAX_INT)
@@ -167,11 +170,12 @@ std::string Lexer::lex_num(std::string & input)
 		while (ret[k] == '0' && k < static_cast<long int>(ret.size() - 1))
 			++k;
 		ret.replace(0, k, "");
-		return "NUM " + ret;
+	    token t("NUM", ret);
+		return t;
 	}
 }
 
-std::string Lexer::lex_var(std::string & input)
+token Lexer::lex_var(std::string & input)
 {
 	int k = 0;
 	std::string ret;	
@@ -198,13 +202,16 @@ std::string Lexer::lex_var(std::string & input)
 
 	//check if keyword
 	if (tok_key->find(ret) != tok_key->end())
-		return tok_key->find(ret)->second;
-	
-	return "IDENT " + ret;
+	{
+		token t("IDENT", tok_key->find(ret)->second);
+		return t;
+	}
+	token t("IDENT", ret);
+	return t;
 }
 
 //extract operator tokens
-std::string Lexer::lex_opr(std::string & input)
+token Lexer::lex_opr(std::string & input)
 {
 	std::string ret = {input[0]};
 	if (input.size() > 1 &&
@@ -223,7 +230,8 @@ std::string Lexer::lex_opr(std::string & input)
 
 	if (!ret.empty())
 		input.replace(0, ret.size(), "");
-	return opr->second;
+	token t(opr->first, opr->second);
+	return t;
 }
 
 
@@ -282,10 +290,11 @@ int Lexer::TYPE(const int c)
 }
 
 //need to prepend with type when returning
-std::string Lexer::select_token(const char c_, int & line_ct)
+token Lexer::select_token(const char c_, int & line_ct)
 {
 	int type = TYPE(c_);
-	std::string tok = "";
+	//empty token
+    token tok("","");
 	switch (type)
 	{
 	case 0: //int
@@ -315,7 +324,7 @@ std::string Lexer::select_token(const char c_, int & line_ct)
 		tape.replace(0, 1, "");
 		break;
 	case 4:
-		tok = "SEMI";
+		tok = {"SEMI", ""};
 		tape.replace(0, 1, "");
 		break;
 	default:
@@ -349,7 +358,7 @@ void Lexer::to_file()
 	std::ofstream f(output_file);
 	if (f.is_open())
 		for (const auto & k : tokens)
-			f << k << '\n';
+			f << k.first << ' ' << k.second.printable() << '\n';
 }
 
 #endif

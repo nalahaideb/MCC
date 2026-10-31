@@ -11,30 +11,38 @@ int main(int argc, char * argv[])
 	int filenum = -1;
 	for (int i = 0; i < argc; ++i)
 	{
+		std::cout << "string = " << argv[i] << std::endl;
 		std::string z = static_cast<std::string>(argv[i]);
 		if (z.find(".mc") != std::string::npos) filenum = i;
 	}
-	std::string flag = argv[3];
+	std::string flag = argv[filenum];
 	
 	//read file arg
 	if (filenum >= 0)
 	{
 		lexer.read_file(argv[2]);
-		std::vector< std::string > output = lexer.lex();
+		std::vector< std::pair< std::string, token > > output = lexer.lex();
 	}
 
 	switch (flag.size())
 	{
-	case 3: //parsing
-		//Parser parser;
-		break;
+	// case 3: //parsing
+		// {
+		// Parser parser;
+		// break;
+		// }
 	case 5: //basic lexer
+		{
 		lexer.read_file(argv[2]);
-		std::vector< std::string > output = lexer.lex();
+		std::vector< std::pair< std::string, token > > output = lexer.lex();
 		break;
-	case:
-		break;
-	case:
+		}
+	// case 4:
+	// 	break;
+	// case 2:
+	// 	break;
+	default:
+		std::cout << "INVALID OPTION\n";
 		break;
 	}
 	//needs to return 1 on error 
