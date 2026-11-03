@@ -8,14 +8,12 @@ typedef std::string symbol;
 
 struct production
 {
-    symbol eval;
+    symbol prod_symbol;
 	std::vector< symbol > produced; //an empty vector = epsilon
 production(const symbol n, const std::vector< symbol > & p)
-	:eval(n), produced(p) {}
+	:prod_symbol(n), produced(p) {}
 };
 
 production test = {"hello", {"test", "test1"}};
-
-//std::cout << test.eval << std::endl;
 
 #endif

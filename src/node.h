@@ -1,6 +1,7 @@
 #ifndef NODE_H
 #define NODE_H
-#include "token.h"
+
+typedef std::string symbol;
 
 struct Node
 {

@@ -27,7 +27,7 @@
   [x] lex vars
   [/] lex int/floats
   [] lex sci notat floats (1E42, 42e10, -1.24e5, etc)
-  [] replace current string return values with token return values
+  [x] replace current string return values with token return values
   [x] add support for extended assignment ops (-=, *=, ++, etc)
   [x] lex with / without spaces
   [x] strip comments
@@ -64,7 +64,8 @@ private:
 	inline void assign_tape(const std::string s)
 	{ tape = s; }
 	inline void to_file();
-	//member functions
+
+	//operations on input tape
 	inline void block_comment_lexer(std::string & input, int & line_ct);
 	inline void single_comment_lexer(std::string & input);
     inline int TYPE(const int c);
@@ -79,7 +80,7 @@ private:
     constexpr static const auto * tok_op = &operators;
 	constexpr static const auto * single_op_ = &single_op;
 
-	//return vector based on line
+	//return vector based on line, str = line num, token = lexed str token
 	std::vector< std::pair< std::string, token > > tokens;
 
 	//copy of input
@@ -248,6 +249,12 @@ void Lexer::block_comment_lexer(std::string & input, int & line_ct)
 	else if (input.find("/*", k + 1) <= end) 
 	{
 		Error e("[block_comment_lexer]: ILLEGAL NESTED COMMENT");
+		throw e;		
+	}
+	//case "/*/" passes the above but should still fail to parse
+	else if (k + 1 >= end)
+	{
+		Error e("[block_comment_lexer]: COMMENT OVERLAP");
 		throw e;		
 	}
 	while (k < end + 1)

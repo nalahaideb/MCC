@@ -1,50 +1,56 @@
 #include <iostream>
 #include "lexer.h"
+#include "parser.h"
 #include "tests.h"
 int main(int argc, char * argv[])
 {
 	//if flag == tokens run lexer, if flag == ast run lexer then parser, if flag == typed run lexer then parser then typer, etc...
-	std::string input;
-	Lexer lexer;
-
-	//switch to handle different stages of compiler
 	int filenum = -1;
+	bool errors = false;
+	std::string file = "";
 	for (int i = 0; i < argc; ++i)
 	{
-		std::cout << "string = " << argv[i] << std::endl;
 		std::string z = static_cast<std::string>(argv[i]);
+		std::cout << z << std::endl;
 		if (z.find(".mc") != std::string::npos) filenum = i;
 	}
-	std::string flag = argv[filenum];
-	
-	//read file arg
-	if (filenum >= 0)
+	if (filenum > 1)
+		file = static_cast<std::string>(argv[filenum]);
+	else
 	{
-		lexer.read_file(argv[2]);
-		std::vector< std::pair< std::string, token > > output = lexer.lex();
-	}
-
-	switch (flag.size())
+		errors = 1; return errors;
+	}	
+	try
 	{
-	// case 3: //parsing
-		// {
-		// Parser parser;
-		// break;
-		// }
-	case 5: //basic lexer
+		// std::cout << static_cast<std::string>(argv[1]).size() - 2 << std::endl;
+		switch (static_cast<std::string>(argv[1]).size() - 2)
 		{
-		lexer.read_file(argv[2]);
-		std::vector< std::pair< std::string, token > > output = lexer.lex();
-		break;
+		case 3: //ast
+			{
+				grammar * g = new grammar;
+				Parser p({}, g);
+				std::unordered_set< symbol > n = p.generate_nullable_set();
+				for (const auto & k : n)
+					std::cout << k << std::endl;
+				delete g;
+				break;
+			}
+		case 5: //tokens
+			{
+				Lexer lexer;
+				lexer.read_file(argv[2]);
+				std::vector< std::pair< std::string, token > > r = lexer.lex();
+				break;
+			}
+		default:
+			std::cout << "INVALID OPTION\n";
+			break;
 		}
-	// case 4:
-	// 	break;
-	// case 2:
-	// 	break;
-	default:
-		std::cout << "INVALID OPTION\n";
-		break;
+	}
+	catch (...)
+	{
+		errors = true;
 	}
 	//needs to return 1 on error 
-	return 0;
+	return errors;
 }
