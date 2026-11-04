@@ -29,9 +29,6 @@ int main(int argc, char * argv[])
 			{
 				grammar * g = new grammar;
 				Parser p({}, g);
-				std::unordered_set< symbol > n = p.generate_nullable_set();
-				for (const auto & k : n)
-					std::cout << k << std::endl;
 				delete g;
 				break;
 			}

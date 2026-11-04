@@ -14,22 +14,9 @@
 */
 //==============================================================================
 struct grammar
-{
-    // std::set< symbol > terminals =
-	// 	{"Type", "Primary", "NUM", "ID"};
-    // std::set< symbol > nonterminals
-	// 	{
-	// 		"Program", "FunDecl", "Params", "Param", "Block",
-	// 		"Item", "Decl", "Args", "Stmt", "Exp", "AndExp",
-	// 		"EqExp", "RelExp", "AddExp", "MulExp", "Unary"
-	// 	};
-	
-    symbol start;
-
-	//needs to be referecing the productions set?
-	// bool is_terminal(const symbol & s) const
-	// { return terminals.find(s) != terminals.end(); }
-
+{	
+    symbol start_ = "START";
+	symbol EOF_ = "$";
 	//splits up possible matches ( {} or [] elements ) into cases that can
 	//satisfy a production
 	std::vector< production > productions

@@ -3,13 +3,23 @@
 #include <iostream>
 #include <unordered_map>
 #include <set>
+#include <stack>
 #include "node.h"
 #include "grammar.h"
 #include "error.h"
 //==============================================================================
 /*
   OVERVIEW:
+  given a grammar g and a vector of input tokens, the parser will:
+  - generate NULLABLE, FIRST and FOLLOW sets
+  - combine aforementioned sets into a parse table
+  - begin reading tokens from input and to build AST
+  - ???
+  - output AST to terminal
 
+  if there are "holes" in the tree that constitutes a parsing error and instead
+  of printing out a partially completed AST, the parser then prints out to console
+  the offending line / type of error
 */
 //==============================================================================
 
@@ -17,24 +27,28 @@
 /*
   TODO:
   
-  [] generates a derivation table from given rules
-     [] generate nullable sets
-	 [] generate first sets
+  [X] generates a parse table from given rules
+     [X] generate nullable sets
+	 [X] generate first sets
 	 [] generate follow sets
-     [] establish precedence rules for forms in the table
-	 [] implement parser-generation algorithm
-	 [] verify 
-  [] constructs syntax tree
-     [] traversal and creation of tree respects precedence rules
-	 [] tree derivations can be replicated consistently
-	 [] checks tree against derivation table to ensure no parsing error
+     [X] establish precedence rules for forms in the table
+	 
+  [] implement parser-generation algorithm
+     [] cases for terminal, nonterminal and end-of-input marker
+	 [] breaks on failed check against parse-table with specific error
+	 
+  [] constructs syntax tree (via stack?)
+     []
+	 []
+	 
   [] output rewritten grammar to "docs/grammar.md"
   (with exception of dangling else, but that could be associated with nearest "if" like c/c++/java)
   
   OPTIMIZATIONS:
   [] add parentheses around return value for type of expression, for example
      "return n > 0;" can be written as "return (n > 0);"
-  [] 
+  [] maybe remove return type of generators, the parser is the only one using
+     them at the moment
 */
 
 //==============================================================================
@@ -42,68 +56,154 @@ class Parser
 {
 public:
 	Parser(const std::vector< token > & input, grammar * gram)
-		:tape(&input), g(gram)//, nullable(generate_nullable_set()),
-		 //first(generate_first_set()), follow(generate_follow_set())
+		:tape(&input), g(gram)
 	{
+		//generate terminal / nonterminal sets
+		populate_nont_term();
+		//generate nullables
 		nullable = generate_nullable_set();
+		//generate firsts
 	    first = generate_first_set();
+		//generate follows
 	    follow = generate_follow_set();
+
+		//combine into parse table
+		
+		std::cout << "NULLABLE:\n";
+		for (const auto & k : nullable)
+			std::cout << k << std::endl;
+		std::cout << "===========FIRST:===========\n";
+		for (const auto & k : first)
+		{
+			std::cout << "ELEMENT = (( '";
+			std::cout << k.first << "' )), SET = [[ ";
+			for (const auto & f : k.second)
+				std::cout << f << " ";
+			std::cout << "]]\n";
+		}
+
+		std::cout << "===========FOLLOW:===========\n";
+		for (const auto & k : follow)
+		{
+			std::cout << "ELEMENT = (( '";
+			std::cout << k.first << "' )), SET = [[ ";
+			for (const auto & f : k.second)
+				std::cout << f << " ";
+			std::cout << "]]\n";
+		}
+
 	}
-	//private:
-	//follow
-	std::unordered_map< symbol, std::unordered_set< symbol > > generate_follow_set();	
-	//first
-	std::unordered_map< symbol, std::unordered_set< symbol > > generate_first_set();
-	//nullable
-	std::unordered_set< symbol > generate_nullable_set();
 	
-	const std::vector < token > * const tape;
+private:
+
+	//member funcs
+	//generators
+	//sets up terminal / nonterminal sets
+    inline void populate_nont_term();
+	//union nullable / first / follow sets in parse_table
+	inline void populate_parse_table();
+	//generate follow set
+	inline std::unordered_map< symbol, std::unordered_set< symbol > > generate_follow_set();	
+	//generate first set
+	inline std::unordered_map< symbol, std::unordered_set< symbol > > generate_first_set();
+	//generate nullable set
+	inline std::unordered_set< symbol > generate_nullable_set();
+	
+	//member vars
+	//terminals
+	std::unordered_set< symbol > terminals;
+	//nonterminals
+	std::unordered_set< symbol > nonterminals;
+	//nullable
 	std::unordered_set< symbol > nullable;
+	//first
 	std::unordered_map< symbol, std::unordered_set< symbol > > first;
+	//follow
 	std::unordered_map< symbol, std::unordered_set< symbol > > follow;
+	//parse table
+	std::unordered_map< symbol, std::unordered_map < symbol, std::unordered_set< symbol > > > parse_table;
+	
+	//std::stack < Node * > eval_stack;
+	const std::vector < token > * const tape;
 	Node * root;
     grammar * g;
 };
 
+void Parser::populate_parse_table()
+{}
+
 std::unordered_map< symbol, std::unordered_set< symbol > > Parser::generate_follow_set()
 {
+	//FOLLOW set (return)
 	std::unordered_map< symbol, std::unordered_set< symbol > > follow;
 
+	//initialize every nonterminal in FOLLOW to epsilon
+	for (const auto & v : nonterminals)
+		follow[v] = {};
+
+	//seed FOLLOW set with artificial start state + EOF marker
+	follow[g->start_] = {g->EOF_};
+
+	bool changed = true;
+	while (changed)
+	{
+		changed = false;
+
+		for (const auto & p : g->productions) //p = production <symbol, vector>
+		{
+			const auto & rhs = p.produced; //rhs = symbol vector
+
+			for (size_t i = 0; i < rhs.size(); ++i)
+			{
+				//FOLLOW is only defined for nonterminals
+				if (nonterminals.count(rhs[i]))
+				{
+					auto & followB = follow[rhs[i]];
+
+					//collect first of production until a non-nullable symbol
+					bool suffix_nullable = true;
+					for (size_t j = i + 1; j < rhs.size(); ++j)
+					{
+						//FIRST(rhs[j]) to FOLLOW(B)
+						for (const auto & s : first[rhs[j]])
+							if (followB.insert(s).second)
+								changed = true;
+
+						//break on non-nullable
+						if (!nullable.count(rhs[j]))
+						{
+							suffix_nullable = false;
+							break;
+						}
+					}
+					//suffix empty or entirely nullable, FOLLOW(A) -> FOLLOW(B)
+					if (suffix_nullable && p.prod_symbol != rhs[i])  //skip A == B
+					{
+						for (const auto & s : follow[p.prod_symbol])
+							if (followB.insert(s).second)
+								changed = true;
+					}
+				}
+			}
+		}
+	}
 	return follow;
 }
 
 std::unordered_map< symbol, std::unordered_set< symbol > > Parser::generate_first_set()
 {
-	//first set (return)
+	//FIRST set (return)
 	std::unordered_map< symbol, std::unordered_set< symbol > > first;
 
-	//programmatically determine terminals / nonterminals
-	//the creation of these sets should be moved to a fn
-	std::unordered_set< symbol > terminals;
-	std::unordered_set< symbol > nonterminals;
-
-	//nullables
-	std::unordered_set< symbol > nullable = generate_nullable_set();
-	
-	//add all left-hand production symbols to nonterminals
-	for (const auto & p : g->productions)
-		nonterminals.insert(p.prod_symbol);
-
-	//add elements in right-hand that are NOT in nonterminals set to terminals
-	for (const auto & p : g->productions)
-		for (const auto & v : p.produced)
-			if (!nonterminals.count(v))
-				terminals.insert(v);
-
-	//populate first set terminals
+	//populate FIRST set terminals
 	for (const auto & t : terminals)
 		first[t] = {t};
 	
-	//populate first set nonterminals
+	//populate FIRST set nonterminals
 	for (const auto & p : nonterminals)
 		first[p] = {};
 
-	//build first set
+	//build FIRST set
 	bool changed = true;
     while (changed)
     {
@@ -157,7 +257,7 @@ std::unordered_set< symbol > Parser::generate_nullable_set()
 			if (is_nullable)
 			{
 				if (!nullable.count(p.prod_symbol))
-					std::cout << "new nont " << p.prod_symbol << std::endl;
+					//std::cout << "new nont " << p.prod_symbol << std::endl;
 				nullable.insert(p.prod_symbol);
 			}
 		}
@@ -167,6 +267,19 @@ std::unordered_set< symbol > Parser::generate_nullable_set()
 	}
 
 	return nullable;
+}
+
+void Parser::populate_nont_term()
+{
+	//add all left-hand production symbols to nonterminals
+	for (const auto & p : g->productions)
+		nonterminals.insert(p.prod_symbol);
+
+	//add elements in right-hand that are NOT in nonterminals set to terminals
+	for (const auto & p : g->productions)
+		for (const auto & v : p.produced)
+			if (!nonterminals.count(v))
+				terminals.insert(v);
 }
 
 #endif
