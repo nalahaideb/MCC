@@ -1,4 +1,6 @@
 *~
+*.mc
+*.out
 src/*~
 src/*.gch
 mcc_notes.txt

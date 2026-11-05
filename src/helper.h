@@ -1,5 +1,6 @@
 #ifndef HELPER_H
 #define HELPER_H
+#include <cctype> //for std::tolower
 
 inline bool ISNUM(const char c)
 {return (c >= 48 && c <= 57);}
@@ -9,6 +10,12 @@ inline bool ISALPHA(const int c)
 
 inline bool ISUNARY(const int c)
 {return c == '-' || c == '!';}
+
+inline std::string lower(std::string s)
+{
+	for (char & c : s) c = std::tolower(static_cast<unsigned char>(c));
+	return s;
+}
 
 //block statements or groupers should start and end with the same thing
 //BEGIN = begin symbol, END = end symbol

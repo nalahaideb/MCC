@@ -13,7 +13,4 @@ struct production
 production(const symbol n, const std::vector< symbol > & p)
 	:prod_symbol(n), produced(p) {}
 };
-
-production test = {"hello", {"test", "test1"}};
-
 #endif

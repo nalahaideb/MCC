@@ -1,7 +1,6 @@
 #include <iostream>
 #include "lexer.h"
-#include "parser.h"
-#include "tests.h"
+#include "parser.cpp"
 int main(int argc, char * argv[])
 {
 	//if flag == tokens run lexer, if flag == ast run lexer then parser, if flag == typed run lexer then parser then typer, etc...
@@ -11,7 +10,7 @@ int main(int argc, char * argv[])
 	for (int i = 0; i < argc; ++i)
 	{
 		std::string z = static_cast<std::string>(argv[i]);
-		std::cout << z << std::endl;
+		//std::cout << z << std::endl;
 		if (z.find(".mc") != std::string::npos) filenum = i;
 	}
 	if (filenum > 1)
@@ -39,9 +38,11 @@ int main(int argc, char * argv[])
 				std::vector< std::pair< std::string, token > > r = lexer.lex();
 				grammar * g = new grammar;
 				std::vector< token > list;
-				for (const auto & t : r) list.push_back(t.second);
+				for (const auto & t : r)
+					list.push_back(t.second);
 				Parser p(list, g);
 				delete g;
+				p.print_tree();
 				break;
 			}
 		default:
@@ -49,8 +50,9 @@ int main(int argc, char * argv[])
 			break;
 		}
 	}
-	catch (...)
+	catch (Error & e)
 	{
+		std::cout << e.message << std::endl;
 		errors = true;
 	}
 	//needs to return 1 on error 

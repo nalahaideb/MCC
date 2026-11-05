@@ -12,8 +12,6 @@ r run:
 
 clean:
 	rm -f mcc
-	rm src/*~
-	rm *.mc
 	rm *.out
 	rm *.err
 
