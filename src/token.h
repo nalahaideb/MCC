@@ -5,13 +5,13 @@
 struct token
 {
 	token(const std::string r, const std::string v)
-		:raw(r), value(v) {}
+		:type(r), value(v) {}
 	
 	std::string printable() const
-	{ return value + " " + raw; }
+	{ return "<token:" + type + ", " + value + ">"; }
 	bool empty()
-	{ return raw.empty() && value.empty(); }
-	std::string raw;
+	{ return type.empty() && value.empty(); }
+	std::string type;
 	std::string value;
 };
 #endif

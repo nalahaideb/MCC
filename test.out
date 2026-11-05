@@ -1,0 +1,10 @@
+1 <token:TYPE, INT>
+1 <token:IDENT, x>
+1 <token:ASSIGN, =>
+1 <token:NUM, 42>
+1 <token:PLUS, +>
+1 <token:NUM, 1>
+1 <token:MINUS, ->
+1 <token:NUM, 0>
+1 <token:SEMI, >
+2 <token:, EOF>

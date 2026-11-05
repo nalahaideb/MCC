@@ -47,8 +47,8 @@
   OPTIMIZATIONS:
   [] add parentheses around return value for type of expression, for example
      "return n > 0;" can be written as "return (n > 0);"
-  [] maybe remove return type of generators, the parser is the only one using
-     them at the moment
+  [] only parse-table needs to persist, so convert return types of set generators
+     to update existing parse-table instead
 */
 
 //==============================================================================
@@ -68,29 +68,31 @@ public:
 	    follow = generate_follow_set();
 
 		//combine into parse table
-		
-		std::cout << "NULLABLE:\n";
-		for (const auto & k : nullable)
-			std::cout << k << std::endl;
-		std::cout << "===========FIRST:===========\n";
-		for (const auto & k : first)
-		{
-			std::cout << "ELEMENT = (( '";
-			std::cout << k.first << "' )), SET = [[ ";
-			for (const auto & f : k.second)
-				std::cout << f << " ";
-			std::cout << "]]\n";
-		}
+		//parse_table 
+		for (const auto & k : input)
+			std::cout << k.printable() << std::endl;
+		// std::cout << "NULLABLE:\n";
+		// for (const auto & k : nullable)
+		// 	std::cout << k << std::endl;
+		// std::cout << "===========FIRST:===========\n";
+		// for (const auto & k : first)
+		// {
+		// 	std::cout << "ELEMENT = (( '";
+		// 	std::cout << k.first << "' )), SET = [[ ";
+		// 	for (const auto & f : k.second)
+		// 		std::cout << f << " ";
+		// 	std::cout << "]]\n";
+		// }
 
-		std::cout << "===========FOLLOW:===========\n";
-		for (const auto & k : follow)
-		{
-			std::cout << "ELEMENT = (( '";
-			std::cout << k.first << "' )), SET = [[ ";
-			for (const auto & f : k.second)
-				std::cout << f << " ";
-			std::cout << "]]\n";
-		}
+		// std::cout << "===========FOLLOW:===========\n";
+		// for (const auto & k : follow)
+		// {
+		// 	std::cout << "ELEMENT = (( '";
+		// 	std::cout << k.first << "' )), SET = [[ ";
+		// 	for (const auto & f : k.second)
+		// 		std::cout << f << " ";
+		// 	std::cout << "]]\n";
+		// }
 
 	}
 	
@@ -260,8 +262,7 @@ std::unordered_set< symbol > Parser::generate_nullable_set()
 					//std::cout << "new nont " << p.prod_symbol << std::endl;
 				nullable.insert(p.prod_symbol);
 			}
-		}
-		
+		}		
 		//break on no new additions
 		if (nullable.size() == nullable_size) changed = false;
 	}

@@ -25,18 +25,23 @@ int main(int argc, char * argv[])
 		// std::cout << static_cast<std::string>(argv[1]).size() - 2 << std::endl;
 		switch (static_cast<std::string>(argv[1]).size() - 2)
 		{
-		case 3: //ast
-			{
-				grammar * g = new grammar;
-				Parser p({}, g);
-				delete g;
-				break;
-			}
 		case 5: //tokens
 			{
 				Lexer lexer;
 				lexer.read_file(argv[2]);
 				std::vector< std::pair< std::string, token > > r = lexer.lex();
+				break;
+			}
+		case 3: //ast
+			{
+				Lexer lexer;
+				lexer.read_file(argv[2]);
+				std::vector< std::pair< std::string, token > > r = lexer.lex();
+				grammar * g = new grammar;
+				std::vector< token > list;
+				for (const auto & t : r) list.push_back(t.second);
+				Parser p(list, g);
+				delete g;
 				break;
 			}
 		default:

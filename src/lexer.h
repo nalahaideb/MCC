@@ -97,14 +97,6 @@ std::vector< std::pair< std::string, token > > Lexer::lex()
 	//empty token
 	token tok("","");
 
-	//return on empty file
-	if (tape.empty())
-	{
-		token t("", "EOF");
-		tokens = {{std::to_string(line_ct), t}};
-		return tokens;
-	}
-
 	while (!tape.empty())
 	{
 		const char c_ = tape[0];
@@ -204,7 +196,7 @@ token Lexer::lex_var(std::string & input)
 	//check if keyword
 	if (tok_key->find(ret) != tok_key->end())
 	{
-		token t("IDENT", tok_key->find(ret)->second);
+		token t("TYPE", tok_key->find(ret)->second);
 		return t;
 	}
 	token t("IDENT", ret);
@@ -231,7 +223,7 @@ token Lexer::lex_opr(std::string & input)
 
 	if (!ret.empty())
 		input.replace(0, ret.size(), "");
-	token t(opr->first, opr->second);
+	token t(opr->second, opr->first);
 	return t;
 }
 
