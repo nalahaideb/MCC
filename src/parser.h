@@ -60,6 +60,7 @@
      "return n > 0;" can be written as "return (n > 0);"
   [] only parse-table needs to persist, so convert return types of set generators
      to update existing parse-table instead
+	 i swear to god if this doesnt work ill blow my brains out
 */
 
 //==============================================================================
