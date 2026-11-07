@@ -106,6 +106,7 @@ std::vector< std::pair< std::string, token > > Lexer::lex()
 			try
 			{
 				tok = select_token(c_, line_ct);
+				tok.line = std::to_string(line_ct);
 			}
 			catch (Error & e) //break on any error
 			{
