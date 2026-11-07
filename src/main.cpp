@@ -42,7 +42,6 @@ int main(int argc, char * argv[])
 					list.push_back(t.second);
 				Parser p(list, g);
 				delete g;
-				p.print_tree();
 				break;
 			}
 		default:
