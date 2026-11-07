@@ -1,8 +1,4 @@
 ****************************  LL(1) argument  *******************
-[] why is it LL(1)
-[] show it is LL(1) except for else
-[] explain how i resolved LL(1) else conflict
-
 The grammar has unambiguous productions, is left-factored removing
 left recursion, and the token tape is read left to right
 
