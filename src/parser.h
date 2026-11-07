@@ -80,33 +80,33 @@ public:
 	    follow = generate_follow_set();
 
 		//put prints into function later
-		std::cout << "================BEGIN NULLABLE================\n";
-		std::cout << "[ ";
-		for (const auto & k : nullable)
-			std::cout << k << ", ";
-		std::cout << "]\n";
-		std::cout << "================END NULLABLE================\n";
-		std::cout << "================BEGIN FIRST================\n";
+		// std::cout << "================BEGIN NULLABLE================\n";
+		// std::cout << "[ ";
+		// for (const auto & k : nullable)
+		// 	std::cout << k << ", ";
+		// std::cout << "]\n";
+		// std::cout << "================END NULLABLE================\n";
+		// std::cout << "================BEGIN FIRST================\n";
 
-		for (const auto & [k, v] : first)
-		{
-			std::cout << k << " -> ";
-			for (const auto & symbol_ : v)
-				std::cout << symbol_ << ", ";
-			std::cout << std::endl;
-		}
-		std::cout << std::endl;
-		std::cout << "================END FIRST================\n";
-		std::cout << "================BEGIN FOLLOW================\n";
-		for (const auto & [k, v] : first)
-		{
-			std::cout << k << " -> ";
-			for (const auto & symbol_ : v)
-				std::cout << symbol_ << ", ";
-			std::cout << std::endl;
-		}
-		std::cout << std::endl;
-		std::cout << "================END FOLLOW================\n";
+		// for (const auto & [k, v] : first)
+		// {
+		// 	std::cout << k << " -> ";
+		// 	for (const auto & symbol_ : v)
+		// 		std::cout << symbol_ << ", ";
+		// 	std::cout << std::endl;
+		// }
+		// std::cout << std::endl;
+		// std::cout << "================END FIRST================\n";
+		// std::cout << "================BEGIN FOLLOW================\n";
+		// for (const auto & [k, v] : first)
+		// {
+		// 	std::cout << k << " -> ";
+		// 	for (const auto & symbol_ : v)
+		// 		std::cout << symbol_ << ", ";
+		// 	std::cout << std::endl;
+		// }
+		// std::cout << std::endl;
+		// std::cout << "================END FOLLOW================\n";
 		
 		//combine into parse table
 		populate_parse_table();
