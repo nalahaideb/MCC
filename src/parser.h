@@ -22,7 +22,7 @@
     as a parameter
   - nodes created depth first, Node * root is top of AST
   - "XChain" functions serve as {} or [] of the original grammar,
-    allowing multiple different productions with no ambiguity
+    allowing multiple different rewritten productions with no ambiguity
   - output AST as S-expression to terminal
 
   if there are "holes" in the tree that constitutes a parsing error and instead
@@ -53,7 +53,7 @@
 	    elements in its production vector, creating nodes for each
 	 [X] terminal nodes have no children, return a leaf node
   	 
-  [] output rewritten grammar + generated sets to "docs/grammar.md"
+  [X] output rewritten grammar + generated sets to "docs/grammar.md"
 
   OPTIMIZATIONS:
   [] add parentheses around return value for type of expression, for example
@@ -79,6 +79,35 @@ public:
 		//generate follows
 	    follow = generate_follow_set();
 
+		//put prints into function later
+		std::cout << "================BEGIN NULLABLE================\n";
+		std::cout << "[ ";
+		for (const auto & k : nullable)
+			std::cout << k << ", ";
+		std::cout << "]\n";
+		std::cout << "================END NULLABLE================\n";
+		std::cout << "================BEGIN FIRST================\n";
+
+		for (const auto & [k, v] : first)
+		{
+			std::cout << k << " -> ";
+			for (const auto & symbol_ : v)
+				std::cout << symbol_ << ", ";
+			std::cout << std::endl;
+		}
+		std::cout << std::endl;
+		std::cout << "================END FIRST================\n";
+		std::cout << "================BEGIN FOLLOW================\n";
+		for (const auto & [k, v] : first)
+		{
+			std::cout << k << " -> ";
+			for (const auto & symbol_ : v)
+				std::cout << symbol_ << ", ";
+			std::cout << std::endl;
+		}
+		std::cout << std::endl;
+		std::cout << "================END FOLLOW================\n";
+		
 		//combine into parse table
 		populate_parse_table();
 
