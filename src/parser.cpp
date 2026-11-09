@@ -31,7 +31,6 @@ symbol Parser::terminal_of(const token & t) const
 //                 PARSE TABLE FUNC
 //==================================================================
 
-
 //combine NULLABLE, FIRST, FOLLOW sets into parse_table
 void Parser::populate_parse_table()
 {
@@ -189,8 +188,7 @@ Node * Parser::seq(Node * acc, Node * next)
 Node * Parser::repeat(const symbol & A, Node * acc, ParseFn item)
 {
 	for (auto rhs = predict(A); rhs && !rhs->empty(); rhs = predict(A))
-	{
-		
+	{		
 		if (terminals.count((*rhs)[0]))
 			consume((*rhs)[0]);
 		Node * x = (this->*item)();
@@ -449,9 +447,12 @@ Node * Parser::Primary()
 		Node * name = leaf(Kind::Ident, "IDENT");
 		return PrimaryChain(name);
 	}
-	if (first == "NUM")   return leaf(Kind::Num, "NUM");
-	if (first == "TRUE")  return leaf(Kind::True, "TRUE");
-	if (first == "FALSE") return leaf(Kind::False, "FALSE");
+	if (first == "NUM")
+		return leaf(Kind::Num, "NUM");
+	if (first == "TRUE")
+		return leaf(Kind::True, "TRUE");
+	if (first == "FALSE")
+		return leaf(Kind::False, "FALSE");
 	if (first == "READ")
 	{
 		const token r = consume("READ");

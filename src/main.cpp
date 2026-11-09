@@ -17,18 +17,20 @@ int main(int argc, char * argv[])
 		file = static_cast<std::string>(argv[filenum]);
 	else
 	{
-		errors = 1; return errors;
+		errors = true; return errors;
 	}	
 	try
 	{
-		// std::cout << static_cast<std::string>(argv[1]).size() - 2 << std::endl;
 		switch (static_cast<std::string>(argv[1]).size() - 2)
 		{
-		case 5: //tokens
+		case 6: //tokens
 			{
 				Lexer lexer;
 				lexer.read_file(argv[2]);
 				std::vector< std::pair< std::string, token > > r = lexer.lex();
+				for (const auto & k : r)
+					std::cout << k.first << ", " << k.second.printable() << std::endl;
+				lexer.to_file();
 				break;
 			}
 		case 3: //ast
@@ -45,13 +47,14 @@ int main(int argc, char * argv[])
 				break;
 			}
 		default:
-			std::cout << "INVALID OPTION\n";
+			std::cerr << "INVALID OPTION\n";
 			break;
 		}
 	}
 	catch (Error & e)
 	{
-		std::cout << e.message << std::endl;
+		std::ofstream f(file.substr(0, file.size() - 3) + ".err");
+	    f << e.message << std::endl;
 		errors = true;
 	}
 	//needs to return 1 on error 

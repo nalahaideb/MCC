@@ -60,10 +60,10 @@ public:
 	//comments
 	inline std::vector< std::pair< std::string, token > > lex();
 	inline void read_file(const std::string file);
+	inline void to_file();
 private:
 	inline void assign_tape(const std::string s)
 	{ tape = s; }
-	inline void to_file();
 
 	//operations on input tape
 	inline void block_comment_lexer(std::string & input, int & line_ct);
@@ -92,7 +92,7 @@ private:
 
 std::vector< std::pair< std::string, token > > Lexer::lex()
 {
-	int line_ct = 1;
+	int line_ct = 0;
 
 	//empty token
 	token tok("","");
@@ -108,11 +108,10 @@ std::vector< std::pair< std::string, token > > Lexer::lex()
 				tok = select_token(c_, line_ct);
 				tok.line = std::to_string(line_ct);
 			}
-			catch (Error & e) //break on any error
+			catch (Error & e) //break on any error, bad way of handling for now
 			{
-				std::ofstream f(file_name + ".err");
-				f << "error: line " + std::to_string(line_ct) + ": ";
-				return tokens;
+			    Error f("error: line " + std::to_string(line_ct + 1) + ": ");
+				throw f;
 			}
 			//add output to current line vector (if it wasnt a comment)
 			if (!tok.empty())
@@ -130,9 +129,6 @@ std::vector< std::pair< std::string, token > > Lexer::lex()
 	token t("", "EOF");
 	tokens.push_back({std::to_string(line_ct), t});
 
-	//write output to file
-	to_file();
-
 	//maybe doesnt need to return the tokens since its writing to file
 	//could fix this later on
 	return tokens;
@@ -148,7 +144,11 @@ token Lexer::lex_num(std::string & input)
 		ret += input[k++];
 		//add loop here to extract ints after sci notat / decimal
 	}
-	
+	// if (input[k] != ' ' || single_op_->find(input[k]) == single_op_->end())
+	// {
+	// 	Error e("[lex_num]: INVALID INTEGER CONSTRUCT");
+	// 	throw e;
+	// }
 	//attempt to build num, throw error if larger than MAX_INT
 	k = std::stoll(ret);
 	if (k > MAX_INT)
@@ -239,17 +239,17 @@ void Lexer::block_comment_lexer(std::string & input, int & line_ct)
 		throw e;
 	}
 	//check if a block comment substr exists k < "/*" < end
-	else if (input.find("/*", k + 1) <= end) 
-	{
-		Error e("[block_comment_lexer]: ILLEGAL NESTED COMMENT");
-		throw e;		
-	}
+	// else if (input.find("/*", k + 1) <= end) 
+	// {
+	// 	Error e("[block_comment_lexer]: ILLEGAL NESTED COMMENT");
+	// 	throw e;		
+	// }
 	//case "/*/" passes the above but should still fail to parse
-	else if (k + 1 >= end)
-	{
-		Error e("[block_comment_lexer]: COMMENT OVERLAP");
-		throw e;		
-	}
+	// else if (k + 1 >= end)
+	// {
+	// 	Error e("[block_comment_lexer]: COMMENT OVERLAP");
+	// 	throw e;		
+	// }
 	while (k < end + 1)
 	{
 		if (input[k] == '\n')
@@ -282,7 +282,7 @@ int Lexer::TYPE(const int c)
 		type = 1;
 	else if (single_op_->find(c) != single_op_->end()) //operator
 		type = 2;
-	else if (c == '\n' || c == '\r') //newline
+	else if (c == '\n') //newline
 		type = 3;
 	else if (c == ';') //semi, leaving here for now, should move later
 		type = 4;
@@ -310,6 +310,11 @@ token Lexer::select_token(const char c_, int & line_ct)
 			if (tape.size() > 1 && tape[0] == '/')
 			{
 			    c = tape[1];
+			}
+			else if (tape.size() > 1 && tape[0] == '*' && tape[1] == '/')
+			{
+				Error e("[select_token]: UNTERMINATED BLOCK COMMENT");
+				throw e;
 			}
 			//single comments
 			if (c == '/') single_comment_lexer(tape);
@@ -358,7 +363,8 @@ void Lexer::to_file()
 	std::ofstream f(output_file);
 	if (f.is_open())
 		for (const auto & k : tokens)
-			f << k.first << ' ' << k.second.printable() << '\n';
+			//some off-by-1 error, line 0 isnt really a thing
+			f << std::to_string(std::stoi(k.first) + 1) << ' ' << k.second.printable() << '\n';
 }
 
 #endif
