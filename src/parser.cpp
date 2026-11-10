@@ -150,7 +150,6 @@ Node * Parser::leaf(Kind k, const symbol & terminal)
 const std::vector< symbol > * Parser::predict(const symbol & A) const
 {
 	const auto row = parse_table.find(A);
-	// std::cout << "[predict]: given symbol = " << A << std::endl;
 	if (row == parse_table.end())
 		return NULL;
 	const auto cell = row->second.find(peek());
@@ -162,9 +161,6 @@ const std::vector< symbol > * Parser::predict(const symbol & A) const
 const std::vector< symbol > & Parser::select(const symbol & A) const
 {
 	const auto * rhs = predict(A);
-	//std::cout << "[select]: given symbol = " << A << std::endl;
-	//failing here when "if (IDENT)" or "something (EXPRESSION)" is reached
-	//BUT WHY
 	if (!rhs)
 		fail(expected_in(A));
 	return *rhs;
