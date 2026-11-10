@@ -106,7 +106,7 @@ std::vector< std::pair< std::string, token > > Lexer::lex()
 			try
 			{
 				tok = select_token(c_, line_ct);
-				tok.line = std::to_string(line_ct);
+				tok.line = std::to_string(line_ct + 1);
 			}
 			catch (Error & e) //break on any error, bad way of handling for now
 			{
@@ -126,7 +126,7 @@ std::vector< std::pair< std::string, token > > Lexer::lex()
 				break;
 	}
 	//break loop, add EOF to token list
-	token t("", "EOF");
+	token t("", "EOF", std::to_string(line_ct + 1));
 	tokens.push_back({std::to_string(line_ct), t});
 
 	//maybe doesnt need to return the tokens since its writing to file
@@ -138,32 +138,40 @@ std::vector< std::pair< std::string, token > > Lexer::lex()
 token Lexer::lex_num(std::string & input)
 {
 	long long int k = 0;
+	unsigned int i = 0;	
 	std::string ret;
 	while (ISNUM(input[k]))
 	{
 		ret += input[k++];
 		//add loop here to extract ints after sci notat / decimal
 	}
-	// if (input[k] != ' ' || single_op_->find(input[k]) == single_op_->end())
-	// {
-	// 	Error e("[lex_num]: INVALID INTEGER CONSTRUCT");
-	// 	throw e;
-	// }
+
+	//clear leading zeros
+	while (ret[i] == '0')
+		++i;
+	
+	unsigned int ret_size = ret.size();
+
+	ret.replace(0, i, "");
+
 	//attempt to build num, throw error if larger than MAX_INT
-	k = std::stoll(ret);
-	if (k > MAX_INT)
+	if (ret.size() > 10)
 	{
-		Error e("[lex_num]: NUM LARGER THAN MAX");
+		Error e("[lex_num]: NUM DIGITS LARGER THAN MAX");
 		throw e;
 	}
 	else //consume (size of int str symbols)
 	{
-		input.replace(0, ret.size(), "");
-		k = 0;
-		//clear leading zeros
-		while (ret[k] == '0' && k < static_cast<long int>(ret.size() - 1))
-			++k;
-		ret.replace(0, k, "");
+		//num all zeros, just return a single zero, clear input of its length first
+		if (ret.empty())
+			ret = "0";
+		k = std::stoll(ret);
+		if (k > MAX_INT)
+		{
+			Error e("[lex_var]: NUM LARGER THAN MAX");
+			throw e;
+		}
+		input.replace(0, ret_size, "");
 	    token t("NUM", ret);
 		return t;
 	}
@@ -238,18 +246,6 @@ void Lexer::block_comment_lexer(std::string & input, int & line_ct)
 		Error e("[block_comment_lexer]: COMMENT UNTERMINATED");
 		throw e;
 	}
-	//check if a block comment substr exists k < "/*" < end
-	// else if (input.find("/*", k + 1) <= end) 
-	// {
-	// 	Error e("[block_comment_lexer]: ILLEGAL NESTED COMMENT");
-	// 	throw e;		
-	// }
-	//case "/*/" passes the above but should still fail to parse
-	// else if (k + 1 >= end)
-	// {
-	// 	Error e("[block_comment_lexer]: COMMENT OVERLAP");
-	// 	throw e;		
-	// }
 	while (k < end + 1)
 	{
 		if (input[k] == '\n')
@@ -346,7 +342,7 @@ void Lexer::read_file(const std::string file)
     if (!f.is_open())
 	{
 		Error e({"[read_file]: FAILED TO OPEN FILE \"" + file + "\""});
-		std::cout << e.message << std::endl;
+		std::cerr << e.message << std::endl;
 		throw e;
     }
 
@@ -364,7 +360,7 @@ void Lexer::to_file()
 	if (f.is_open())
 		for (const auto & k : tokens)
 			//some off-by-1 error, line 0 isnt really a thing
-			f << std::to_string(std::stoi(k.first) + 1) << ' ' << k.second.printable() << '\n';
+			f << k.first << ' ' << k.second.printable() << '\n';
 }
 
 #endif

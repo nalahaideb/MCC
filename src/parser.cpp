@@ -117,7 +117,7 @@ std::string Parser::expected_in(const symbol & A) const
 	std::set< std::string > names;
 	for (const auto & cell : parse_table.at(A))
 		names.insert(readout(cell.first));
-
+	
 	std::string out;
 	for (const auto & n : names)
 		out += (out.empty() ? "" : " or ") + n;
@@ -145,11 +145,12 @@ Node * Parser::leaf(Kind k, const symbol & terminal)
 	return new Node(k, verbatim ? t.value : lowercase(t.value), NULL, NULL, t.line);
 }
 
-//production here MAY OR MAY NOT have a production, epsilon allowed
+//symbol here MAY OR MAY NOT have a production, epsilon allowed
 //production for A via table lookup, NULL if no such production
 const std::vector< symbol > * Parser::predict(const symbol & A) const
 {
 	const auto row = parse_table.find(A);
+	// std::cout << "[predict]: given symbol = " << A << std::endl;
 	if (row == parse_table.end())
 		return NULL;
 	const auto cell = row->second.find(peek());
@@ -161,6 +162,9 @@ const std::vector< symbol > * Parser::predict(const symbol & A) const
 const std::vector< symbol > & Parser::select(const symbol & A) const
 {
 	const auto * rhs = predict(A);
+	//std::cout << "[select]: given symbol = " << A << std::endl;
+	//failing here when "if (IDENT)" or "something (EXPRESSION)" is reached
+	//BUT WHY
 	if (!rhs)
 		fail(expected_in(A));
 	return *rhs;
@@ -170,7 +174,7 @@ const std::vector< symbol > & Parser::select(const symbol & A) const
 bool Parser::is_epsilon(const symbol & A) const
 {
 	const auto * rhs = predict(A);
-	return !(rhs || rhs->empty());
+	return !rhs || rhs->empty();
 }
 
 //create another node if part of a sequence (bool or numerical expr)
@@ -240,7 +244,8 @@ Node * Parser::call(const symbol & A, Node * name)
 
 Node * Parser::Start()
 {
-	Node * p = Program(); consume("EOF");
+	Node * p = Program();
+	consume("EOF");
 	return p;
 }
 
@@ -468,7 +473,8 @@ Node * Parser::Primary()
 //( PrimaryCallChain | epsilon
 Node * Parser::PrimaryChain(Node * name)
 {
-	if (is_epsilon("PrimaryChain")) return name;
+	if (is_epsilon("PrimaryChain"))
+		return name;
 	consume("LPAREN");
 	return PrimaryCallChain(name);
 }
@@ -487,6 +493,6 @@ void Parser::parse()
 {
 	pos = 0;
 	root = Start();
-	std::cout << *root << std::endl;
+	print_tree();
 }
 

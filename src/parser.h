@@ -81,7 +81,7 @@ public:
 		
 		//combine into parse table
 		populate_parse_table();
-
+		
 		//execute
 		parse();
 	}
@@ -90,7 +90,13 @@ public:
 	inline void parse();
 
 	//----------print finished AST---------- 
-	inline void print_tree() { std::cout << *root << std::endl; }
+	inline void print_tree()
+	{
+		if (root != NULL)
+			std::cout << *root << std::endl;
+		else
+			std::cerr << "NULL\n" << std::endl;
+	}
 private:
 
 	//----------member funcs----------
@@ -184,9 +190,9 @@ private:
 	//read head
 	size_t pos = 0; 
 	
-	//----------terminals----------
+	//----------sets----------
+	//terminals
 	std::unordered_set< symbol > terminals;
-	std::unordered_set< symbol > leaf_terminals;
 	//nonterminals
 	std::unordered_set< symbol > nonterminals;
 	//nullable
