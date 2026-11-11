@@ -143,6 +143,7 @@ struct Node
 };
 
 inline std::ostream & operator<<(std::ostream & os, const Node & n);
+
 //prints conjoined statements for AST if node kind Seq or Else
 inline void print_list(const Node * n, std::ostream & os)
 {
@@ -156,6 +157,7 @@ inline void print_list(const Node * n, std::ostream & os)
 		os << *n;
 }
 
+//s-exp printout
 inline std::ostream & operator<<(std::ostream & os, const Node & n)
 {
 	//leaf only print s text
@@ -179,5 +181,4 @@ inline std::ostream & operator<<(std::ostream & os, const Node & n)
 	}
 	return os << ')';
 }
-
 #endif

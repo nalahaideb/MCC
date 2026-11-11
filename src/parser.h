@@ -97,6 +97,9 @@ public:
 		else
 			std::cerr << "NULL\n" << std::endl;
 	}
+
+	//get root node for symtable and typing
+	Node * get_root() const { return root; }
 private:
 
 	//----------member funcs----------

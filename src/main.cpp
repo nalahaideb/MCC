@@ -1,16 +1,19 @@
 #include <iostream>
 #include "lexer.h"
 #include "parser.cpp"
+#include "symtable.cpp"
+
 int main(int argc, char * argv[])
 {
-	//if flag == tokens run lexer, if flag == ast run lexer then parser, if flag == typed run lexer then parser then typer, etc...
+	//if flag == tokens -> lexer
+	//if flag == ast    -> lexer -> parser
+	//if flag == check  -> lexer -> parser -> typer, etc...
 	int filenum = -1;
 	bool errors = false;
 	std::string file = "";
 	for (int i = 0; i < argc; ++i)
 	{
 		std::string z = static_cast<std::string>(argv[i]);
-		//std::cout << z << std::endl;
 		if (z.find(".mc") != std::string::npos) filenum = i;
 	}
 	if (filenum > 1)
@@ -36,15 +39,28 @@ int main(int argc, char * argv[])
 				Lexer lexer;
 				lexer.read_file(argv[2]);
 				std::vector< std::pair< std::string, token > > r = lexer.lex();
-				// for (const auto & k : r)
-				// 	std::cout << k.first << ", " <<
-				// 		k.second.printable() << std::endl;
 				grammar * g = new grammar;
 				std::vector< token > list;
 				for (const auto & t : r)
 					list.push_back(t.second);
 				Parser p(list, g);
 				delete g;
+				break;
+			}
+		case 5: //type checker
+			{
+				Lexer lexer;
+				lexer.read_file(argv[2]);
+				std::vector< std::pair< std::string, token > > r = lexer.lex();
+				grammar * g = new grammar;
+				std::vector< token > list;
+				for (const auto & t : r)
+					list.push_back(t.second);
+				Parser p(list, g);
+				delete g;
+				Symtable symtable;
+				symtable.check(p.get_root());
+				symtable.run();
 				break;
 			}
 		default:
