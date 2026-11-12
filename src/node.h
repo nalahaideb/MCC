@@ -181,4 +181,74 @@ inline std::ostream & operator<<(std::ostream & os, const Node & n)
 	}
 	return os << ')';
 }
+
+//escape characters that would break a quoted DOT label
+inline std::string dot_escape(const std::string & s)
+{
+	std::string out;
+	for (char c : s)
+	{
+		if (c == '"' || c == '\\') out += '\\';
+		out += c;
+	}
+	return out;
+}
+
+//emits n and everything below it; returns n's id so the parent can draw its edge
+inline int dot_node(const Node * n, std::ostream & os, int & next_id)
+{
+	const int id = next_id++;
+
+	//label: kind, then leaf text and line on their own rows ("\\n" is a DOT newline)
+	std::string label = dot_escape(kind_name(n->kind));
+	if (!n->s.empty())    label += "\\n" + dot_escape(n->s);
+	if (!n->line.empty()) label += "\\nline " + dot_escape(n->line);
+
+	const bool glue = (n->kind == Kind::Seq || n->kind == Kind::Else);
+	const bool leaf = (!n->l && !n->r && !n->s.empty());
+
+	os << "  n" << id << " [label=\"" << label << "\"";
+	if (glue)      os << ", style=dashed, color=gray50, fontcolor=gray40";
+	else if (leaf) os << ", shape=box";
+	os << "];\n";
+
+	if (n->l)
+	{
+		const int c = dot_node(n->l, os, next_id);
+		os << "  n" << id << " -> n" << c << " [label=\"l\"];\n";
+	}
+	if (n->r)
+	{
+		const int c = dot_node(n->r, os, next_id);
+		os << "  n" << id << " -> n" << c << " [label=\"r\"];\n";
+	}
+	return id;
+}
+
+//writes a complete Graphviz document for the tree under root
+inline void print_dot(const Node * root, std::ostream & os)
+{
+	os << "digraph AST {\n"
+	   << "  graph [ordering=out];\n"          // keep l drawn left of r
+	   << "  node  [shape=ellipse, fontname=\"Helvetica\"];\n"
+	   << "  edge  [fontname=\"Helvetica\", fontsize=10];\n";
+
+	if (root)
+	{
+		int next_id = 0;
+		dot_node(root, os, next_id);
+	}
+	os << "}\n";
+}
+
+//wrapper so it doesn't collide with operator<< (S-expression) or raw()
+struct Dot { const Node * n; };
+inline Dot dot(const Node * n) { return Dot{ n }; }
+
+inline std::ostream & operator<<(std::ostream & os, const Dot & d)
+{
+	print_dot(d.n, os);
+	return os;
+}
+
 #endif

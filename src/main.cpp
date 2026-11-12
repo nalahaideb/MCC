@@ -45,6 +45,7 @@ int main(int argc, char * argv[])
 					list.push_back(t.second);
 				Parser p(list, g);
 				delete g;
+			    p.print_tree();
 				break;
 			}
 		case 5: //type checker
@@ -59,8 +60,13 @@ int main(int argc, char * argv[])
 				Parser p(list, g);
 				delete g;
 				Symtable symtable;
-				symtable.check(p.get_root());
+
+				std::ofstream out("ast.dot");
+				out << dot(p.get_root());
+				out.close();
+
 				symtable.run();
+				symtable.check(p.get_root());
 				break;
 			}
 		default:

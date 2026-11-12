@@ -7,6 +7,7 @@ class Error
 	:message(m) {}
 	
 	const std::string message;
+    int line;
 };
 
 #endif

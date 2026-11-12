@@ -489,6 +489,6 @@ void Parser::parse()
 {
 	pos = 0;
 	root = Start();
-	print_tree();
+	//print_tree();
 }
 
