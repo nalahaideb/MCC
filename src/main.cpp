@@ -33,6 +33,8 @@ int main(int argc, char * argv[])
 				Lexer lexer;
 				lexer.read_file(argv[2]);
 				std::vector< std::pair< std::string, token > > r = lexer.lex();
+				// for (const auto & token : r)
+				// 	std::cout << token.second.line << " " << token.second.printable() << std::endl;
 				lexer.to_file();
 				break;
 			}

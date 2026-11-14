@@ -22,7 +22,15 @@
   - once a binding node is found (param, assign, decl), select_binding
     is called to pick a type to bind and enter it into the current
 	scope
-  - 
+	
+  - check_program does a first pass to collect signatures, then calls check()
+
+  - check() handles opening / closing of scopes for functions and blocks,
+    calls for evaluation on arguments, expressions or function calls,
+	checks if/else statements for bool expressions
+
+  - final check at the end to verify main is declared and correctly implemented
+    (no args, return type, return value)
 */
 //==============================================================================
 
@@ -30,14 +38,14 @@
 /*
   TODO:
   [X] how to determine when a scope is "closed" in the AST? or even CST?
-     (process its children until leaf nodes are hit, different cases
-	 for different constructs, check notes)
+      (process its children until leaf nodes are hit, different cases
+	  for different constructs, check notes)
   [X] define how to bind variables, which nodes require special rules
-     in "check()" (assign, decl, fun, block, etc)
-  [] bind_assign has to recursively check the rightmost subtree for
-     all idents and ensure they are called within their scopes
-	 but how does (or should) it evaluate it when it has an expression?
-  [] table for functions
+      in "check()" (assign, decl, fun, block, etc)
+  [x] bind_assign has to recursively check the rightmost subtree for
+      all idents and ensure they are called within their scopes
+      but how does (or should) it evaluate it when it has an expression?
+  [x] table for functions
 
   OPTIMIZATIONS:
 
@@ -47,6 +55,7 @@
      but the entire programs
   [] cleanup of functions, huge functions should be partitioned out, namely expr_type
   [] multiple functions check l/r children for binding, can be templated or generalized
+  [] accumulator in fns where applicable to minimize fn call overhead
 */
 //==============================================================================
 

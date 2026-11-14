@@ -110,7 +110,7 @@ std::vector< std::pair< std::string, token > > Lexer::lex()
 			}
 			catch (Error & e) //break on any error, bad way of handling for now
 			{
-			    Error f("error: line " + std::to_string(line_ct + 1) + ": ");
+			    Error f("ERROR: line " + std::to_string(line_ct + 1) + ": ");
 				throw f;
 			}
 			//add output to current line vector (if it wasnt a comment)
@@ -126,7 +126,7 @@ std::vector< std::pair< std::string, token > > Lexer::lex()
 				break;
 	}
 	//break loop, add EOF to token list
-	token t("", "EOF", std::to_string(line_ct + 1));
+	token t("EOF", "", std::to_string(line_ct + 1));
 	tokens.push_back({std::to_string(line_ct), t});
 
 	//maybe doesnt need to return the tokens since its writing to file
@@ -157,7 +157,7 @@ token Lexer::lex_num(std::string & input)
 	//attempt to build num, throw error if larger than MAX_INT
 	if (ret.size() > 10)
 	{
-		Error e("[lex_num]: NUM DIGITS LARGER THAN MAX");
+		Error e("[lex_num]: ERROR: NUM DIGITS LARGER THAN MAX");
 		throw e;
 	}
 	else //consume (size of int str symbols)
@@ -168,7 +168,7 @@ token Lexer::lex_num(std::string & input)
 		k = std::stoll(ret);
 		if (k > MAX_INT)
 		{
-			Error e("[lex_var]: NUM LARGER THAN MAX");
+			Error e("[lex_var]: ERROR: NUM LARGER THAN MAX");
 			throw e;
 		}
 		input.replace(0, ret_size, "");
@@ -236,23 +236,21 @@ token Lexer::lex_opr(std::string & input)
 	return t;
 }
 
-
 //removes all block comments, throws error on nested
 void Lexer::block_comment_lexer(std::string & input, int & line_ct)
 {
-	size_t k = 0, end = input.find("*/"), size = input.size();
-	if (end == std::string::npos || end <= 0)
+	const size_t end = input.find("*/", 2);
+	if (end == std::string::npos)
 	{
 		Error e("[block_comment_lexer]: COMMENT UNTERMINATED");
 		throw e;
 	}
-	while (k < end + 1)
-	{
+
+	for (size_t k = 0; k < end; ++k)
 		if (input[k] == '\n')
 			++line_ct;
-		++k;
-	}
-	input = input.substr(k + 1, size - k);
+
+	input.erase(0, end + 2);
 }
 
 //removes input until '\n' is found
@@ -360,7 +358,7 @@ void Lexer::to_file()
 	if (f.is_open())
 		for (const auto & k : tokens)
 			//some off-by-1 error, line 0 isnt really a thing
-			f << k.first << ' ' << k.second.printable() << '\n';
+			f << k.second.line << ' ' << k.second.printable() << '\n';
 }
 
 #endif

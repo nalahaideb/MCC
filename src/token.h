@@ -10,10 +10,10 @@ struct token
 	
 	std::string printable() const
 	{
-		if (value != "EOF" && value != "SEMI")
-			return value + " " + type;
+		if (value == "IDENT")
+			return type + " " + value;
 		else
-			return value;
+			return type;
 	}
 	bool empty()
 	{ return type.empty() && value.empty(); }

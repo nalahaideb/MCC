@@ -61,9 +61,7 @@ bool Symtable::is_leaf(const Node * n)
 //check if valid nonterminal for binding value pair
 bool Symtable::is_binding(const name & bound)
 {
-	return (bound == "decl"
-			|| bound == "assign"
-			|| bound == "param");
+	return (bound == "decl" || bound == "assign" || bound == "param");
 }
 
 //doesnt really need to check left since it shouldnt ever be there
