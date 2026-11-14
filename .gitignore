@@ -1,5 +1,7 @@
 *~
 *.png
+*.dot
+*.py
 *.mc
 *.out
 src/*~

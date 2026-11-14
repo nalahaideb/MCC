@@ -11,6 +11,8 @@ int main(int argc, char * argv[])
 	int filenum = -1;
 	bool errors = false;
 	std::string file = "";
+	//switched manually for checking specific error types
+	bool debug_prints = false;
 	for (int i = 0; i < argc; ++i)
 	{
 		std::string z = static_cast<std::string>(argv[i]);
@@ -65,8 +67,8 @@ int main(int argc, char * argv[])
 				out << dot(p.get_root());
 				out.close();
 
-				symtable.run();
-				symtable.check(p.get_root());
+				symtable.check_program(p.get_root());
+				std::cout << "OK";
 				break;
 			}
 		default:
@@ -88,7 +90,24 @@ int main(int argc, char * argv[])
 		}
 		else
 		{
-			std::cerr << e.message << std::endl;
+			//standard error messages are just "error: line x:" so this
+			//converts my other error types to that
+			if (debug_prints)
+			{
+				std::cout << e.message << std::endl;
+			}
+			else
+			{
+		    unsigned int start = e.message.find("ERROR");
+			unsigned int end = e.message.rfind(':');
+			std::string s;
+			for (unsigned int i = start; i <= end; ++i)
+				if (ISALPHA(e.message[i]))
+					s += std::tolower(e.message[i]);
+				else
+					s += e.message[i];
+			std::cerr << s << std::endl;
+			}
 		}
 		errors = true;
 	}

@@ -9,6 +9,8 @@ mcc: $(SRCS) $(HDRS)
 
 r run:
 	./mcc
+g:
+	dot -Tpng ast.dot -o ast.png
 
 clean:
 	rm -f mcc

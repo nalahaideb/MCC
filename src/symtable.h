@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <fstream>
 #include "node.h"
+#include "signature.h"
 #include "error.h"
 
 //==============================================================================
@@ -37,45 +38,60 @@
      all idents and ensure they are called within their scopes
 	 but how does (or should) it evaluate it when it has an expression?
   [] table for functions
+
+  OPTIMIZATIONS:
+
+  [] definitely need to clear out some redundant NULL checks in the
+     beginning of functions
+  [] enum or hashing of string types would not only make this parts code more readable
+     but the entire programs
+  [] cleanup of functions, huge functions should be partitioned out, namely expr_type
+  [] multiple functions check l/r children for binding, can be templated or generalized
 */
 //==============================================================================
 
-typedef std::string name;
-typedef std::string type;
 typedef std::unordered_map< name, type > scope_table;
 typedef scope_table::iterator binding;
 
 class Symtable
 {
- public:
+public:
 	Symtable() {}
-
-	inline bool empty();
-
-	inline void check(const Node * root);
-	inline void run();
 	
- private:
-
+	inline void check_program(const Node * root);
+	
+private:
+	//member funcs
+	inline bool empty();
 	inline bool is_leaf(const Node * n);
 	inline bool is_binding(const name & bound);
-	inline bool is_valid_assignment(const binding b);
 	inline bool func_returns(const Node * f);
-	
+	inline bool ends_in_return(const Node * n);
+
 	inline void enter();
 	inline void exit();
-	inline void bind(const name n, const type t);
+	inline void bind(const name n, const type t, const std::string bind);
 	inline void select_binding(const Node * n);
 	inline void bind_decl(const Node * n);
 	inline void bind_assign(const Node * n);
+	inline void bind_param(const Node * n);
+	inline void collect_args(const Node * n, std::vector< const Node * > & out);
+	inline void collect_signatures(const Node * root);
+	inline void check(const Node * root);
 
 	inline scope_table * lookup(const name n);
-	inline type expr_type(const Node * n, const type expected);
-	
+	inline type expr_type(const Node * n);
+	inline void subexpr_type(const Node * n, const type & expected);
+	inline type call_type(const Node * n);
+
+	//member variables
 	std::list< scope_table > sym_table;
+	std::unordered_map< name, signature > func_table;
+	//for checking fun returns
+	type current_ret;
+
 	//wishlist, not implemented yet
 	/*
-	  inline void bind_param(const Node * n);
 	  inline Node * find();
 	*/
 };
@@ -83,22 +99,28 @@ class Symtable
 //debug for scope_table
 inline std::ostream & operator<<(std::ostream & os, const scope_table & s)
 {
-	os << "--------------------------------------------------\n";
-	for (const auto & [k, v] : s)
-		os << "< name, type = (" << k << ", " << v << ") >\n";
-	os << "--------------------------------------------------\n";
+	if (s.empty())
+		os << "TABLE EMPTY\n";
+	else
+	{
+		os << "[scope size] = " << s.size() << std::endl;
+		os << "--------------------------------------------------\n";
+		for (const auto & [k, v] : s)
+			os << "< name, type = (" << k << ", " << v << ") >\n";
+		os << "--------------------------------------------------\n";
+	}
 	return os;
 }
 
 //debug for scope_table list
 inline std::ostream & operator<<(std::ostream & os, const std::list< scope_table > & s)
 {
-	os << "begin table printout:\n\n";
+	os << ">>>begin table printout<<<\n\n";
 	for (const auto & t : s)
 	{
 		os << t << "\n\n";
 	}
-	os << "end table printout\n";
+	os << "***end table printout***\n";
 	return os;
 }
 

@@ -101,7 +101,7 @@ std::vector< std::pair< std::string, token > > Lexer::lex()
 	{
 		const char c_ = tape[0];
 		//ignore whitespace
-		if (c_ != ' ' && c_ != '\t')
+		if (c_ != ' ' && c_ != '\t' && c_ != '\r')
 		{
 			try
 			{
