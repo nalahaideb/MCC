@@ -98,11 +98,6 @@ private:
 	std::unordered_map< name, signature > func_table;
 	//for checking fun returns
 	type current_ret;
-
-	//wishlist, not implemented yet
-	/*
-	  inline Node * find();
-	*/
 };
 
 //debug for scope_table

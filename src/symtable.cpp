@@ -356,10 +356,19 @@ void Symtable::collect_signatures(const Node * root)
 
 		std::vector< const Node * > ps;
 		collect_args(plist, ps);
+
+		if (ps.size() > 8)
+		{
+			Error e("[collect_signatures]: ERROR: line " + f->line
+					+ ": max arg count is 8, found "
+					+ std::to_string(ps.size()) + " args");
+			throw e;
+		}
 		for (const Node * p : ps)
 			//param l = type
 			sig.params.push_back(p->l->s);
 
+		
 		const name fname = head->r->s;
 		if (!func_table.insert({ fname, sig }).second)
 		{

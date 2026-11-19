@@ -2,7 +2,7 @@
 #include "lexer.h"
 #include "parser.cpp"
 #include "symtable.cpp"
-
+#include "IR_translator.cpp"
 int main(int argc, char * argv[])
 {
 	//if flag == tokens -> lexer
@@ -50,6 +50,7 @@ int main(int argc, char * argv[])
 				Parser p(list, g);
 				delete g;
 			    p.print_tree();
+				
 				break;
 			}
 		case 5: //type checker
@@ -64,13 +65,33 @@ int main(int argc, char * argv[])
 				Parser p(list, g);
 				delete g;
 				Symtable symtable;
-
-				std::ofstream out("ast.dot");
-				out << dot(p.get_root());
-				out.close();
-
+				
+				// std::ofstream out("ast.dot");
+				// out << dot(p.get_root());
+				// out.close();
+				
 				symtable.check_program(p.get_root());
 				std::cout << "OK";
+				break;
+			}
+		case 2: //IR
+			{
+				Lexer lexer;
+				lexer.read_file(argv[2]);
+				std::vector< std::pair< std::string, token > > r = lexer.lex();
+				grammar * g = new grammar;
+				std::vector< token > list;
+				for (const auto & t : r)
+					list.push_back(t.second);
+				Parser p(list, g);
+				delete g;
+
+				Symtable symtable;
+				symtable.check_program(p.get_root());
+
+				IR_translator ir;
+				ir.translate(p.get_root());
+				ir.to_file(file.substr(0, file.size() - 3) + ".ir");
 				break;
 			}
 		default:
@@ -100,15 +121,15 @@ int main(int argc, char * argv[])
 			}
 			else
 			{
-		    unsigned int start = e.message.find("ERROR");
-			unsigned int end = e.message.rfind(':');
-			std::string s;
-			for (unsigned int i = start; i <= end; ++i)
-				if (ISALPHA(e.message[i]))
-					s += std::tolower(e.message[i]);
-				else
-					s += e.message[i];
-			std::cerr << s << std::endl;
+				unsigned int start = e.message.find("ERROR");
+				unsigned int end = e.message.rfind(':');
+				std::string s;
+				for (unsigned int i = start; i <= end; ++i)
+					if (ISALPHA(e.message[i]))
+						s += std::tolower(e.message[i]);
+					else
+						s += e.message[i];
+				std::cerr << s << std::endl;
 			}
 		}
 		errors = true;

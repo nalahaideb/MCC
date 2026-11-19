@@ -22,8 +22,8 @@
   [X] print CST
     [X] needs some form of strict type (enum ?) for determining what is what, more descriptive than Kind
 	
-  [] collapse CST into AST, print as S-expression
-  [] need to add line field for tracing first error, e.g. (error: line 2: expected 'INT') or something
+  [x] collapse CST into AST, print as S-expression
+  [x] need to add line field for tracing first error, e.g. (error: line 2: expected 'INT') or something
   
 */
 //==============================================================================
