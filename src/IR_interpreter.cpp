@@ -1,5 +1,19 @@
 #include "IR_interpreter.h"
 #include "helper.h"
+//assign the read_head to index of main function
+inline void IR_interpreter::find_main()
+{
+	for (size_t i = 0; i < file_content.size(); ++i)
+		if (file_content[i].find("main()") != std::string::npos)
+		{
+			read_head = i;
+			return;
+		}
+	//this should never be thrown but its here just in case
+	throw Error("[find_main]: ERROR: line " + std::to_string(file_content.size())
+				+ ": no main function in file");
+}
+
 //should read IR code in line-by-line to a vector
 void IR_interpreter::read(const std::string file)
 {
@@ -7,8 +21,7 @@ void IR_interpreter::read(const std::string file)
 	std::string line;
     if (!f.is_open())
 	{
-		Error e({"[read_file]: FAILED TO OPEN FILE \"" + file + "\""});
-		throw e;
+		throw Error({"[read_file]: ERROR: FAILED TO OPEN FILE \"" + file + "\""});
     }
 	else
 	{
@@ -22,12 +35,36 @@ void IR_interpreter::read(const std::string file)
 //a switch-case
 void IR_interpreter::evaluate()
 {
+	find_labels();
+	find_main();
 	while (file_content[read_head] != "END")
 	{
 		decide(file_content[read_head]);
-		std::cout << "read_head = " << read_head << std::endl; 
+		//std::cout << "read_head = " << read_head << std::endl;
 		++read_head;
 	}
+	for (const std::string & o : output)
+		std::cout << o << std::endl;
+}
+
+//records every LABEL's line index before running,
+//so IF/GOTO can jump forward to labels not reached yet
+//key is "<FUNCTION line>:<label>", see get_label_pos
+void IR_interpreter::find_labels()
+{
+	size_t func = 0;
+	for (size_t i = 0; i < file_content.size(); ++i)
+	{
+		if (file_content[i].rfind("FUNCTION", 0) == 0)
+			func = i;
+		else if (file_content[i].rfind("LABEL", 0) == 0)
+		{
+			read_head = i;
+			add_label(std::to_string(func) + ":"
+					  + label_eval(file_content[i]).name);
+		}
+	}
+	read_head = 0;
 }
 
 
@@ -43,7 +80,7 @@ std::vector< std::string > IR_interpreter::split(const std::string l)
 }
 
 //"f(t1, t2)" -> name = "f", args = {"t1", "t2"}
-//"main()"    -> name = "main", args = {}
+//"main()" -> name = "main", args = {}
 void IR_interpreter::split_args(const std::string s, std::string & name,
 								std::vector< std::string > & args)
 {
@@ -82,11 +119,11 @@ void IR_interpreter::split_args(const std::string s, std::string & name,
 IR_func IR_interpreter::func_eval(const std::string l)
 {
 	IR_func f;
-	size_t kw = l.find("FUNCTION");
-	if (kw == std::string::npos)
+	size_t k = l.find("FUNCTION");
+	if (k == std::string::npos)
 		throw Error("[func_eval]: ERROR: line " + std::to_string(read_head)
 					+ ": expected FUNCTION in \"" + l + "\"");
-	split_args(l.substr(kw + 8), f.name, f.params);
+	split_args(l.substr(k + 8), f.name, f.params);
 	return f;
 }
 
@@ -104,6 +141,7 @@ IR_cond IR_interpreter::cond_eval(const std::string l)
 	c.rhs = t[3];
 	c.then_label = t[5];
 	c.else_label = t[7];
+
 	return c;
 }
 
@@ -119,6 +157,8 @@ IR_call IR_interpreter::call_eval(const std::string l)
 	IR_call c;
 	c.dest = t[0];
 	split_args(l.substr(kw + 4), c.func, c.args);
+	c.func = t[3];
+	std::cout << "func name: " << c.func << std::endl;
 	return c;
 }
 
@@ -155,11 +195,14 @@ IR_assign IR_interpreter::assign_eval(const std::string l)
 		a.lhs = t[2];
 		a.op = t[3];
 		a.rhs = t[4];
+		//div by zero check
+		if ((a.op == "/" || a.op == "%") && (a.rhs == "0" || vtable[a.rhs] == "0"))
+			throw Error("[assign_eval]: ERROR: line " + std::to_string(read_head)
+						+ ": div by zero \"" + l + "\"");
 	}
 	else
 		throw Error("[assign_eval]: ERROR: line " + std::to_string(read_head)
 					+ ": bad assignment \"" + l + "\"");
-	//div by zero check
 	return a;
 }
 
@@ -193,13 +236,27 @@ void IR_interpreter::jump(const size_t i)
 	read_head = i;
 }
 
+//labels restart at l1 in every function, so they're keyed
+//"<FUNCTION line>:<label>" and looked up in the current function
  size_t IR_interpreter::get_label_pos(const std::string l)
 {
-	auto label = labels.find(l);
+	auto label = labels.find(std::to_string(func_start()) + ":" + l);
 	if (label == labels.end())
-		throw Error("[get_label_pos]: ERROR: line " + std::to_string(read_head));
+		throw Error("[get_label_pos]: ERROR: line "
+					+ std::to_string(read_head)
+					+ ": no such label \"" + l + "\"");
 	else
-		return labels[l];
+		return label->second;
+}
+
+//index of the FUNCTION line the read head is currently inside
+size_t IR_interpreter::func_start()
+{
+	for (size_t i = read_head + 1; i-- > 0; )
+		if (file_content[i].rfind("FUNCTION", 0) == 0)
+			return i;
+	throw Error("[func_start]: ERROR: line " + std::to_string(read_head)
+				+ ": not inside a function");
 }
 
 void IR_interpreter::add_reg(const std::string r, const std::string val)
@@ -220,27 +277,61 @@ void IR_interpreter::add_label(const std::string l)
 void IR_interpreter::decide(const std::string line)
 {
 	std::string tok = line.substr(0, line.find(' '));
-	std::cout << " tok = " << tok << std::endl;
+	//std::cout << " tok = " << tok << std::endl;
+	std::string result = "";
     if (tok == "FUNCTION") //function header
-		func_eval(line);
+		IR_func f = func_eval(line);
 	else if (tok == "LABEL") //label
-		label_eval(line);
+		IR_label label = label_eval(line);
 	else if (tok == "GOTO") //jump
-		goto_eval(line);
+	{
+		IR_goto g = goto_eval(line);
+		jump(get_label_pos(g.label));
+	}
 	else if (tok[0] == 't') //register
 	{
 		std::vector< std::string > t = split(line);
-		if (t.size() > 2 && t[2] == "CALL") //t1 := CALL f(...)
-			call_eval(line);
+		//t1 := CALL f(...)
+		if (t.size() > 2 && t[2] == "CALL")
+		{
+			IR_call call = call_eval(line);
+			if (call.func == "print")
+				result = print_call(call);
+			else if (call.func == "read")
+				read_call(call);
+		}
 		else
-			assign_eval(line);
+		{
+			IR_assign a = assign_eval(line);
+			if (a.op == "")
+			{
+				if (a.lhs[0] == 't') //register
+					vtable[a.dest] = vtable[a.lhs];
+				else //literal
+					vtable[a.dest] = a.lhs;
+			}
+			else if (a.lhs == "")
+			{
+				if (vtable.find(a.rhs) != vtable.end())
+					vtable[a.dest] = a.op + vtable[a.rhs];
+			}
+			else
+				vtable[a.dest] = binop_result(a.lhs, a.op, a.rhs);
+		}
 	}
 	else if (tok == "IF") //conditional
-		cond_eval(line);
+	{
+		IR_cond cond = cond_eval(line);
+		cond_result(cond.lhs, cond.relop, cond.rhs,
+					cond.then_label, cond.else_label);
+	}
 	else if (tok == "RETURN") //return
-		return_eval(line);
+		IR_return ret = return_eval(line);
 	else
-		throw Error("[decide]: ERROR: line " + std::to_string(read_head) + ": no match for \"" + tok + "\"");
+		throw Error("[decide]: ERROR: line " + std::to_string(read_head)
+					+ ": no match for \"" + tok + "\"");
+	if (result != "")
+		output.push_back(result);
 	// switch (tok)
 	// {
 	// case: //function header
@@ -252,7 +343,103 @@ void IR_interpreter::decide(const std::string line)
 	// }
 }
 
-bool IR_interpreter::is_register(const std::string line)
+std::string IR_interpreter::binop_result(const std::string opr0,
+								  const std::string operator_,
+								  const std::string opr1)
 {
-	return (vtable.find(line) != vtable.end());
+	long long left, right, eval;
+	if (opr0.find('t') == std::string::npos)
+	    left = std::stoi(opr0);
+	else
+		left = std::stoi(vtable[opr0]);
+	if (opr1.find('t') == std::string::npos)
+	    right = std::stoi(opr1);
+	else
+		right = std::stoi(vtable[opr1]);
+
+	//resize to 32bit int for storing in register
+	left = static_cast< int >(left);
+	right = static_cast< int >(right);
+	
+	//whatever man
+	if (operator_ == "+") //add
+		eval = static_cast< int >(left + right);
+	else if (operator_ == "-") //sub
+		eval = static_cast< int >(left - right);
+	else if (operator_ == "*") //mult
+		eval = static_cast< int >(left * right);
+	else if (operator_ == "/") //div
+		eval = static_cast< int >(left / right);
+	else if (operator_ == "%") //mod
+		eval = static_cast< int >(left % right);
+	else
+		throw Error("[binop_result]: ERROR: line " + std::to_string(read_head) + ": unknown operator " + operator_);
+	
+	return std::to_string(eval);
+}
+
+void IR_interpreter::cond_result(const std::string opr0,
+								 const std::string relop,
+								 const std::string opr1,
+								 const std::string then_label,
+								 const std::string else_label)
+{
+	int left, right;
+	bool taken;
+	if (opr0.find('t') == std::string::npos)
+	    left = std::stoi(opr0);
+	else
+		left = std::stoi(vtable[opr0]);
+	if (opr1.find('t') == std::string::npos)
+	    right = std::stoi(opr1);
+	else
+		right = std::stoi(vtable[opr1]);
+
+	if (relop == "==")
+		taken = left == right;
+	else if (relop == "!=")
+		taken = left != right;
+	else if (relop == "<")
+		taken = left < right;
+	else if (relop == "<=")
+		taken = left <= right;
+	else if (relop == ">")
+		taken = left > right;
+	else if (relop == ">=")
+		taken = left >= right;
+	else
+		throw Error("[cond_result]: ERROR: line "
+					+ std::to_string(read_head)
+					+ ": unknown relop " + relop);
+
+	jump(get_label_pos(taken ? then_label : else_label));
+}
+
+std::string IR_interpreter::print_call(const IR_call & c)
+{
+	if (c.args.size() != 1)
+		throw Error("[print_call]: ERROR: line " + std::to_string(read_head)
+					+ ": print takes one argument");
+	const std::string a = c.args[0];
+	//literal
+	if (a[0] != 't')
+		return a;
+	auto reg = vtable.find(a);
+	if (reg == vtable.end())
+		throw Error("[print_call]: ERROR: line " + std::to_string(read_head)
+					+ ": undefined register \"" + a + "\"");
+	return reg->second;
+}
+
+void IR_interpreter::read_call(const IR_call & c)
+{
+	if (!c.args.empty())
+		throw Error("[read_call]: ERROR: line " + std::to_string(read_head)
+					+ ": read takes no arguments");
+	int n;
+	//EOF or non-int input
+	if (!(std::cin >> n))
+		throw Error("[read_call]: ERROR: line " + std::to_string(read_head)
+					+ ": expected an int on input");
+	add_reg(c.dest, std::to_string(n));
 }

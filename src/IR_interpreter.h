@@ -9,9 +9,6 @@
 #include "IR_grammar.h"
 #include "var_scope.h"
 
-//split-up lines from file_content one struct per instruction type
-//atoms  kept as strings
-
 //FUNCTION f(t1, t2)
 struct IR_func   { std::string name; std::vector< std::string > params; };
 //LABEL l1
@@ -24,9 +21,9 @@ struct IR_cond   { std::string lhs, relop, rhs, then_label, else_label; };
 struct IR_return { std::string val; };
 //t1 := CALL f(t2, t3)
 struct IR_call   { std::string dest, func; std::vector< std::string > args; };
-//op == ""  -> copy  (dest := lhs)
+//op == "" -> copy  (dest := lhs)
 //lhs == "" -> unary (dest := op rhs), e.g. "t1 := - t2"
-//else      -> binop (dest := lhs op rhs)
+//else -> binop (dest := lhs op rhs)
 struct IR_assign { std::string dest, lhs, op, rhs; };
 
 /*
@@ -73,12 +70,26 @@ class IR_interpreter
 	inline void add_label(const std::string l);
 	inline void decide(const std::string line);
 	inline bool is_register(const std::string line);
+	inline void find_main();
+	inline void find_labels();
+	inline size_t func_start();
+	inline void read_call(const IR_call & c);
+	inline std::string print_call(const IR_call & c);
+	inline std::string binop_result(const std::string opr0,
+									const std::string operator_,
+									const std::string opr1);
+	inline void cond_result(const std::string opr0,
+							const std::string relop,
+							const std::string opr1,
+							const std::string then_label,
+							const std::string else_label);
 	//member variables
 	std::vector< std::string > file_content;
 	std::unordered_map< std::string, size_t > labels;
 	std::vector< std::string > output;
 	var_scope vtable;
-    IR_grammar * g; //needed?? idk yet
+	var_scope::iterator return_val;
+    //IR_grammar * g; //needed?? idk yet
 	size_t read_head = 0;
 };
 #endif
