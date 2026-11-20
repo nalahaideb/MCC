@@ -129,7 +129,7 @@ inline const std::string kind_name(Kind k)
 
 struct Node
 {
-	//type of node (nontermianl or terminal)
+	//type of node (nonterminal or terminal)
 	Kind kind;
 	//text for leaf terminals, empty for interior nonterminal nodes
 	symbol s;

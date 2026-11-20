@@ -13,6 +13,9 @@ inline bool ISALPHA(const int c)
 inline bool ISUNARY(const int c)
 {return c == '-' || c == '!';}
 
+inline bool ISALNUM(const char c)
+{return (ISALPHA(c) || ISNUM(c));}
+
 static std::string lowercase(std::string s)
 {
 	for (char & c : s) c = std::tolower(static_cast< unsigned char >(c));
@@ -40,18 +43,4 @@ static std::string readout(const symbol & terminal)
 	const auto it = text.find(terminal);
 	return it != text.end() ? it->second : terminal;
 }
-
-//block statements or groupers should start and end with the same thing
-//BEGIN = begin symbol, END = end symbol
-//if nestable, will avoid nested checks, i.e. "(())" != "/* /* */ */"
-/* inline bool IS_VALID_BLOCK(std::string & s, std::string BEGIN, std::string END, bool nestable) */
-/* { */
-/*     size_t start = s.find(BEGIN), stop = s.find(END); */
-/* 	if (start == std::string::npos || stop == std::string::npos) */
-/* 		return false; */
-/* 	else */
-/* 	{ */
-/* 		if (!nestable) */
-/* 	} */
-/* } */
 #endif

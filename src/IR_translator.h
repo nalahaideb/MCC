@@ -5,8 +5,9 @@
 #include <vector>
 #include <fstream>
 #include <unordered_map>
-#include "node.h"
 #include "error.h"
+#include "node.h"
+#include "var_scope.h"
 //==============================================================================
 /*
   OVERVIEW:
@@ -41,8 +42,6 @@
   [] IR_interpreter
 */
 //==============================================================================
-
-typedef std::unordered_map< std::string, std::string > var_scope;
 
 class IR_translator
 {

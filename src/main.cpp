@@ -3,6 +3,7 @@
 #include "parser.cpp"
 #include "symtable.cpp"
 #include "IR_translator.cpp"
+#include "IR_interpreter.cpp"
 int main(int argc, char * argv[])
 {
 	//if flag == tokens -> lexer
@@ -89,9 +90,13 @@ int main(int argc, char * argv[])
 				Symtable symtable;
 				symtable.check_program(p.get_root());
 
-				IR_translator ir;
-				ir.translate(p.get_root());
-				ir.to_file(file.substr(0, file.size() - 3) + ".ir");
+				IR_translator ir_trans;
+				ir_trans.translate(p.get_root());
+				std::string ir_file = file.substr(0, file.size() - 3) + ".ir";
+				ir_trans.to_file(ir_file);
+				IR_interpreter ir_interp;
+				ir_interp.read(ir_file);
+				ir_interp.evaluate();
 				break;
 			}
 		default:
