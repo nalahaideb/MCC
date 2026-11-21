@@ -49,7 +49,7 @@ public:
 	IR_translator() {}
 
 	inline void translate(const Node * root);
-	inline void to_file(const std::string & path) const;
+	inline std::string to_file(const std::string & mc_file) const;
 	inline const std::vector< std::string > & code() const;
 
 private:

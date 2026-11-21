@@ -16,6 +16,15 @@ inline bool ISUNARY(const int c)
 inline bool ISALNUM(const char c)
 {return (ISALPHA(c) || ISNUM(c));}
 
+//strips dir names and extensions from given path, for testing
+inline std::string stem(const std::string & path)
+{
+	size_t slash = path.find_last_of('/');
+	std::string name = (slash == std::string::npos) ? path : path.substr(slash + 1);
+	size_t dot = name.rfind('.');
+	return (dot == std::string::npos || dot == 0) ? name : name.substr(0, dot);
+}
+
 static std::string lowercase(std::string s)
 {
 	for (char & c : s) c = std::tolower(static_cast< unsigned char >(c));

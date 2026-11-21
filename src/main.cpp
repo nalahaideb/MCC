@@ -92,11 +92,12 @@ int main(int argc, char * argv[])
 
 				IR_translator ir_trans;
 				ir_trans.translate(p.get_root());
-				std::string ir_file = file.substr(0, file.size() - 3) + ".ir";
-				ir_trans.to_file(ir_file);
+				std::string ir_file = ir_trans.to_file(file);
 				IR_interpreter ir_interp;
 				ir_interp.read(ir_file);
 				ir_interp.evaluate();
+				ir_interp.to_file(ir_file);
+				
 				break;
 			}
 		default:

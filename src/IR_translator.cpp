@@ -1,4 +1,5 @@
 #include "IR_translator.h"
+#include "helper.h"
 
 //==================================================================
 //                 PUBLIC
@@ -14,11 +15,16 @@ void IR_translator::translate(const Node * root)
 		trans_function(f);
 }
 
-void IR_translator::to_file(const std::string & path) const
+//"dir/test.mc" -> "./test.ir", so nothing is written next to the input
+std::string IR_translator::to_file(const std::string & mc_file) const
 {
+	std::string path = stem(mc_file) + ".ir";
 	std::ofstream out(path);
+	if (!out.is_open())
+		throw Error("[IR_translator::to_file]: ERROR: FAILED TO OPEN FILE \"" + path + "\"");
 	for (const auto & line : code_)
 		out << line << '\n';
+	return path;
 }
 
 const std::vector< std::string > & IR_translator::code() const

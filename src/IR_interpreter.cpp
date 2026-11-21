@@ -43,20 +43,24 @@ void IR_interpreter::evaluate()
 		//std::cout << "read_head = " << read_head << std::endl;
 		++read_head;
 	}
-	for (const std::string & o : output)
-		std::cout << o << std::endl;
+	// std::cout << "output results: \n";
+	// for (const std::string & o : output)
+	// 	std::cout << o << std::endl;
 }
 
-//records every LABEL's line index before running,
-//so IF/GOTO can jump forward to labels not reached yet
-//key is "<FUNCTION line>:<label>", see get_label_pos
+//preprocessing step for recording jump points called by jump()
+//treats lines with "FUNCTION" the same as a label
 void IR_interpreter::find_labels()
 {
 	size_t func = 0;
 	for (size_t i = 0; i < file_content.size(); ++i)
 	{
 		if (file_content[i].rfind("FUNCTION", 0) == 0)
+		{
 			func = i;
+			read_head = i;
+			funcs[func_eval(file_content[i]).name] = i;
+		}
 		else if (file_content[i].rfind("LABEL", 0) == 0)
 		{
 			read_head = i;
@@ -156,9 +160,10 @@ IR_call IR_interpreter::call_eval(const std::string l)
 					+ ": bad call \"" + l + "\"");
 	IR_call c;
 	c.dest = t[0];
+
+	//func = func name, args = vector of registers
 	split_args(l.substr(kw + 4), c.func, c.args);
-	c.func = t[3];
-	std::cout << "func name: " << c.func << std::endl;
+
 	return c;
 }
 
@@ -299,21 +304,20 @@ void IR_interpreter::decide(const std::string line)
 				result = print_call(call);
 			else if (call.func == "read")
 				read_call(call);
+			else //user defined function
+				func_call(call);
 		}
-		else
+		else //direct assignment on a register
 		{
 			IR_assign a = assign_eval(line);
 			if (a.op == "")
-			{
 				if (a.lhs[0] == 't') //register
 					vtable[a.dest] = vtable[a.lhs];
 				else //literal
 					vtable[a.dest] = a.lhs;
-			}
-			else if (a.lhs == "")
+			else if (a.lhs == "") //unary minus
 			{
-				if (vtable.find(a.rhs) != vtable.end())
-					vtable[a.dest] = a.op + vtable[a.rhs];
+				vtable[a.dest] = std::to_string(static_cast< int >(-v));
 			}
 			else
 				vtable[a.dest] = binop_result(a.lhs, a.op, a.rhs);
@@ -326,7 +330,10 @@ void IR_interpreter::decide(const std::string line)
 					cond.then_label, cond.else_label);
 	}
 	else if (tok == "RETURN") //return
+	{
 		IR_return ret = return_eval(line);
+		return_call(ret);
+	}
 	else
 		throw Error("[decide]: ERROR: line " + std::to_string(read_head)
 					+ ": no match for \"" + tok + "\"");
@@ -374,7 +381,6 @@ std::string IR_interpreter::binop_result(const std::string opr0,
 		eval = static_cast< int >(left % right);
 	else
 		throw Error("[binop_result]: ERROR: line " + std::to_string(read_head) + ": unknown operator " + operator_);
-	
 	return std::to_string(eval);
 }
 
@@ -442,4 +448,79 @@ void IR_interpreter::read_call(const IR_call & c)
 		throw Error("[read_call]: ERROR: line " + std::to_string(read_head)
 					+ ": expected an int on input");
 	add_reg(c.dest, std::to_string(n));
+}
+
+void IR_interpreter::to_file(const std::string s)
+{
+	std::string output_file = stem(s) + ".out";
+	std::ofstream f(output_file);
+	if (!f.is_open())
+		throw Error("[IR_interpreter::to_file]: ERROR: FAILED TO OPEN FILE \"" + output_file + "\"");
+	for (const auto & k : output)
+		f << k << '\n';
+}
+
+//t1 := CALL f(t2, t3)
+//saves the caller line, dest, regs then starts f with
+//new regs holding its params
+//evaluate() ++read_head moves past the FUNCTION line into f's body
+void IR_interpreter::func_call(const IR_call & c)
+{
+	auto f = funcs.find(c.func);
+	if (f == funcs.end())
+		throw Error("[func_call]: ERROR: line " + std::to_string(read_head)
+					+ ": undefined function \"" + c.func + "\"");
+	//args read intp the caller regs before switching
+	std::vector< std::string > vals;
+	for (const std::string & a : c.args)
+		vals.push_back(get_val(a));
+
+	IR_func header = func_eval(file_content[f->second]);
+	if (header.params.size() != vals.size())
+		throw Error("[func_call]: ERROR: line " + std::to_string(read_head)
+					+ ": \"" + c.func + "\" expects "
+					+ std::to_string(header.params.size()) + " arguments, got "
+					+ std::to_string(vals.size()));
+
+	call_stack.push_back({read_head, c.dest, std::move(vtable)});
+	vtable.clear();
+	for (size_t i = 0; i < vals.size(); ++i)
+		add_reg(header.params[i], vals[i]);
+	jump(f->second);
+}
+
+//RETURN t1
+//call: restore the caller regs, put t1s value in the call struct dest and resume after
+//main: jump to mains END
+void IR_interpreter::return_call(const IR_return & r)
+{
+	const std::string val = get_val(r.val);
+	if (call_stack.empty())
+	{
+		size_t e = read_head;
+		while (e < file_content.size() && file_content[e] != "END")
+			++e;
+		if (e == file_content.size())
+			throw Error("[return_call]: ERROR: line " + std::to_string(read_head)
+						+ ": no END after RETURN");
+		//evaluate() increments read_head onto END
+		jump(e - 1);
+		return;
+	}
+	IR_frame f = std::move(call_stack.back());
+	call_stack.pop_back();
+	vtable = std::move(f.regs);
+	add_reg(f.dest, val);
+	jump(f.ret);
+}
+
+std::string IR_interpreter::get_val(const std::string a)
+{
+	if (a[0] != 't') //literal
+		return a;
+	auto reg = vtable.find(a);
+	if (reg == vtable.end())
+		throw Error("[get_val]: ERROR: line " + std::to_string(read_head)
+					+ ": undefined register \"" + a + "\"");
+	return reg->second;
 }
