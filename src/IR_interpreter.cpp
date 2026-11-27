@@ -1,5 +1,6 @@
 #include "IR_interpreter.h"
 #include "helper.h"
+
 //assign the read_head to index of main function
 inline void IR_interpreter::find_main()
 {
@@ -316,9 +317,7 @@ void IR_interpreter::decide(const std::string line)
 				else //literal
 					vtable[a.dest] = a.lhs;
 			else if (a.lhs == "") //unary minus
-			{
-				vtable[a.dest] = std::to_string(static_cast< int >(-v));
-			}
+				vtable[a.dest] = binop_result("0", "-", a.rhs);
 			else
 				vtable[a.dest] = binop_result(a.lhs, a.op, a.rhs);
 		}
